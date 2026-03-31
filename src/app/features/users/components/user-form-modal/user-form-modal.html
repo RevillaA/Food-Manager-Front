@@ -1,0 +1,94 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <div>
+          <h3>{{ modalTitle() }}</h3>
+          <p>Completa la información del usuario.</p>
+        </div>
+
+        <button type="button" class="modal__close" (click)="close()">×</button>
+      </div>
+
+      <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-grid">
+          <div class="form-field form-field--full">
+            <label for="full_name">Nombre completo</label>
+            <input id="full_name" type="text" formControlName="full_name" />
+
+            @if (hasFieldError('full_name', 'required')) {
+              <small class="field-error">El nombre completo es obligatorio.</small>
+            }
+            @if (hasFieldError('full_name', 'minlength')) {
+              <small class="field-error">Debe tener al menos 3 caracteres.</small>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="username">Usuario</label>
+            <input id="username" type="text" formControlName="username" />
+
+            @if (hasFieldError('username', 'required')) {
+              <small class="field-error">El username es obligatorio.</small>
+            }
+            @if (hasFieldError('username', 'minlength')) {
+              <small class="field-error">Debe tener al menos 3 caracteres.</small>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="role_name">Rol</label>
+            <select id="role_name" formControlName="role_name">
+              @for (role of roles; track role.value) {
+                <option [value]="role.value">{{ role.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field form-field--full">
+            <label for="email">Correo electrónico</label>
+            <input id="email" type="email" formControlName="email" />
+
+            @if (hasFieldError('email', 'email')) {
+              <small class="field-error">Correo electrónico inválido.</small>
+            }
+          </div>
+
+          @if (mode() === 'create') {
+            <div class="form-field form-field--full">
+              <label for="password">Contraseña</label>
+              <input id="password" type="password" formControlName="password" />
+
+              @if (hasFieldError('password', 'required')) {
+                <small class="field-error">La contraseña es obligatoria.</small>
+              }
+              @if (hasFieldError('password', 'minlength')) {
+                <small class="field-error">Debe tener al menos 6 caracteres.</small>
+              }
+            </div>
+          }
+        </div>
+
+        @if (errorMessage()) {
+          <div class="form-alert">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <div class="modal__actions">
+          <button type="button" class="button button--secondary" (click)="close()">
+            Cancelar
+          </button>
+
+          <button type="submit" class="button button--primary" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Guardando...
+            } @else {
+              {{ submitLabel() }}
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

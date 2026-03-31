@@ -1,0 +1,26 @@
+@if (isLoading()) {
+  <div class="private-layout-loading">
+    <div class="private-layout-loading__card">
+      <span class="spinner"></span>
+      <p>Cargando sesión...</p>
+    </div>
+  </div>
+} @else {
+  <div class="private-layout" [class.private-layout--sidebar-closed]="!isSidebarOpen()">
+    <app-sidebar
+      [isOpen]="isSidebarOpen()"
+      [currentRole]="currentRole()"
+    />
+
+    <div class="private-layout__main">
+      <app-topbar
+        [currentUser]="currentUser()"
+        (toggleSidebar)="toggleSidebar()"
+      />
+
+      <main class="private-layout__content">
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+}

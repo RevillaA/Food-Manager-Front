@@ -1,0 +1,112 @@
+<section class="page">
+  <div class="page__header page__header--actions">
+    <div>
+      <h2>Usuarios</h2>
+      <p>Gestión administrativa de accesos del sistema.</p>
+    </div>
+
+    <button type="button" class="primary-button" (click)="openCreateModal()">
+      Nuevo usuario
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <article class="card">
+    @if (isLoading()) {
+      <div class="state-box">Cargando usuarios...</div>
+    } @else if (visibleUsers().length === 0) {
+      <div class="state-box">No hay usuarios visibles para administrar.</div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Usuario</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Creado</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (user of visibleUsers(); track user.id) {
+              <tr>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email || '—' }}</td>
+                <td>{{ user.role.name }}</td>
+                <td>
+                  <app-user-status-toggle
+                    [isActive]="user.is_active"
+                    [disabled]="isStatusLoading() === user.id"
+                    (toggled)="toggleUserStatus(user)"
+                  />
+                </td>
+                <td>{{ user.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    class="table-button"
+                    (click)="openEditModal(user)"
+                  >
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination__summary">
+          Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+        </div>
+
+        <div class="pagination__actions">
+          <button
+            type="button"
+            class="pagination__button"
+            [disabled]="page() <= 1"
+            (click)="goToPreviousPage()"
+          >
+            Anterior
+          </button>
+
+          <button
+            type="button"
+            class="pagination__button"
+            [disabled]="page() >= totalPages()"
+            (click)="goToNextPage()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
+  </article>
+</section>
+
+<app-user-form-modal
+  [isOpen]="isCreateModalOpen()"
+  [mode]="'create'"
+  [user]="null"
+  (closed)="closeCreateModal()"
+  (saved)="handleCreated()"
+/>
+
+<app-user-form-modal
+  [isOpen]="isEditModalOpen()"
+  [mode]="'edit'"
+  [user]="selectedUser()"
+  (closed)="closeEditModal()"
+  (saved)="handleUpdated()"
+/>

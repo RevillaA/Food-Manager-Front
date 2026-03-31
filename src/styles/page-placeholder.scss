@@ -1,0 +1,42 @@
+.page {
+  display: grid;
+  gap: 1rem;
+
+  &__header {
+    h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      color: #111827;
+    }
+
+    p {
+      margin: 0.25rem 0 0;
+      color: #6b7280;
+    }
+  }
+}
+
+.placeholder-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.placeholder-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.05);
+
+  h3 {
+    margin: 0 0 0.55rem;
+    color: #111827;
+  }
+
+  p {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.5;
+  }
+}

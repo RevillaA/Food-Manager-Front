@@ -1,0 +1,37 @@
+<aside class="sidebar" [class.sidebar--collapsed]="!isOpen()">
+  <div class="sidebar__brand">
+    <div class="sidebar__logo">ER</div>
+
+    @if (isOpen()) {
+      <div class="sidebar__brand-text">
+        <h2>EsquinaRevis</h2>
+        <p>Sistema de gestión</p>
+      </div>
+    }
+  </div>
+
+  @if (isOpen() && currentUser()) {
+    <div class="sidebar__user">
+      <strong>{{ currentUser()?.full_name }}</strong>
+      <span>{{ currentUser()?.role?.name }}</span>
+    </div>
+  }
+
+  <nav class="sidebar__nav">
+    @for (item of navigationItems(); track item.route) {
+      <a
+        class="sidebar__link"
+        [routerLink]="item.route"
+        routerLinkActive="sidebar__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [attr.aria-label]="item.label"
+      >
+        <span class="material-symbols-outlined">{{ item.icon }}</span>
+
+        @if (isOpen()) {
+          <span>{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+</aside>

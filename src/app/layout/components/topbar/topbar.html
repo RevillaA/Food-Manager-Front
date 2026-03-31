@@ -1,0 +1,34 @@
+<header class="topbar">
+  <div class="topbar__left">
+    <button
+      type="button"
+      class="topbar__icon-button"
+      aria-label="Alternar menú"
+      (click)="toggleSidebar.emit()"
+    >
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+
+    <div class="topbar__title">
+      <h1>Panel privado</h1>
+      <p>Gestión interna del sistema</p>
+    </div>
+  </div>
+
+  <div class="topbar__right">
+    @if (currentUser()) {
+      <div class="topbar__user">
+        <strong>{{ currentUser()?.full_name }}</strong>
+        <span>{{ currentUser()?.role?.name }}</span>
+      </div>
+    }
+
+    <button
+      type="button"
+      class="topbar__logout-button"
+      (click)="logout()"
+    >
+      Cerrar sesión
+    </button>
+  </div>
+</header>
