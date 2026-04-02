@@ -1,0 +1,72 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <div>
+          <h3>{{ modalTitle() }}</h3>
+          <p>Completa la información de la categoría.</p>
+        </div>
+
+        <button type="button" class="modal__close" (click)="close()">×</button>
+      </div>
+
+      <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-grid">
+          <div class="form-field form-field--full">
+            <label for="name">Nombre</label>
+            <input id="name" type="text" formControlName="name" />
+
+            @if (hasFieldError('name', 'required')) {
+              <small class="field-error">El nombre es obligatorio.</small>
+            }
+            @if (hasFieldError('name', 'minlength')) {
+              <small class="field-error">Debe tener al menos 2 caracteres.</small>
+            }
+          </div>
+
+          <div class="form-field form-field--full">
+            <label for="category_type">Tipo de categoría</label>
+            <select id="category_type" formControlName="category_type">
+              @for (type of categoryTypes; track type.value) {
+                <option [value]="type.value">{{ type.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field form-field--full">
+            <label for="description">Descripción</label>
+            <textarea
+              id="description"
+              rows="4"
+              formControlName="description"
+            ></textarea>
+
+            @if (hasFieldError('description', 'maxlength')) {
+              <small class="field-error">La descripción no puede superar 200 caracteres.</small>
+            }
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="form-alert">
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <div class="modal__actions">
+          <button type="button" class="button button--secondary" (click)="close()">
+            Cancelar
+          </button>
+
+          <button type="submit" class="button button--primary" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Guardando...
+            } @else {
+              {{ submitLabel() }}
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,13 +1,257 @@
 <section class="page">
   <div class="page__header">
-    <h2>Ventas</h2>
-    <p>Módulo visible para administración y cajero.</p>
+    <div>
+      <h2>Ventas</h2>
+      <p>Consulta de ventas registradas y resumen operativo del día.</p>
+    </div>
+
+    <button type="button" class="primary-button" (click)="refreshAll()">
+      Actualizar
+    </button>
   </div>
 
-  <div class="placeholder-grid">
-    <article class="placeholder-card">
-      <h3>Ventas registradas</h3>
-      <p>Aquí se listarán ventas del día e histórico según el rol y filtros.</p>
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <h3>Ventas del día</h3>
+      @if (isLoadingToday()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ todaySalesCount() }}</strong>
+      }
+    </article>
+
+    <article class="summary-card">
+      <h3>Total vendido hoy</h3>
+      @if (isLoadingToday()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ todaySalesTotal() | number:'1.2-2' }}</strong>
+      }
+    </article>
+
+    <article class="summary-card">
+      <h3>Pagadas hoy</h3>
+      @if (isLoadingToday()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ paidTodayCount() }}</strong>
+      }
+    </article>
+
+    <article class="summary-card">
+      <h3>Pendientes hoy</h3>
+      @if (isLoadingToday()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ pendingTodayCount() }}</strong>
+      }
+    </article>
+  </div>
+
+  <article class="filters-card">
+    <div class="filters">
+      <div class="filters__field">
+        <label for="paymentStatusFilter">Estado de pago</label>
+        <select
+          id="paymentStatusFilter"
+          [value]="paymentStatusFilter()"
+          (change)="onPaymentStatusFilterChange($event)"
+        >
+          <option value="">Todos</option>
+          <option value="PAID">PAID</option>
+          <option value="PENDING">PENDING</option>
+        </select>
+      </div>
+
+      <div class="filters__field">
+        <label for="paymentMethodFilter">Método de pago</label>
+        <select
+          id="paymentMethodFilter"
+          [value]="paymentMethodFilter()"
+          (change)="onPaymentMethodFilterChange($event)"
+        >
+          <option value="">Todos</option>
+          <option value="CASH">CASH</option>
+          <option value="TRANSFER">TRANSFER</option>
+        </select>
+      </div>
+
+      <div class="filters__field">
+        <label for="dateFromFilter">Desde</label>
+        <input
+          id="dateFromFilter"
+          type="date"
+          [value]="dateFromFilter()"
+          (change)="onDateFromChange($event)"
+        />
+      </div>
+
+      <div class="filters__field">
+        <label for="dateToFilter">Hasta</label>
+        <input
+          id="dateToFilter"
+          type="date"
+          [value]="dateToFilter()"
+          (change)="onDateToChange($event)"
+        />
+      </div>
+
+      <div class="filters__actions">
+        <button type="button" class="secondary-button" (click)="applyFilters()">
+          Aplicar filtros
+        </button>
+
+        <button type="button" class="secondary-button" (click)="clearFilters()">
+          Limpiar
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <div class="content-grid">
+    <article class="card">
+      <div class="card__header">
+        <h3>Lista de ventas</h3>
+      </div>
+
+      @if (isLoading()) {
+        <div class="state-box">Cargando ventas...</div>
+      } @else if (sales().length === 0) {
+        <div class="state-box">No hay ventas registradas para los filtros seleccionados.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th># Venta</th>
+                <th># Pedido</th>
+                <th>Pago</th>
+                <th>Método</th>
+                <th>Total</th>
+                <th>Usuario</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (sale of sales(); track sale.id) {
+                <tr
+                  [class.row-selected]="selectedSale()?.id === sale.id"
+                  (click)="selectSale(sale.id)"
+                >
+                  <td>#{{ sale.sale_number }}</td>
+                  <td>{{ sale.order_id }}</td>
+                  <td>
+                    <span [class]="getPaymentStatusBadgeClass(sale.payment_status)">
+                      {{ sale.payment_status }}
+                    </span>
+                  </td>
+                  <td>{{ getPaymentMethodLabel(sale.payment_method) }}</td>
+                  <td>{{ sale.total | number:'1.2-2' }}</td>
+                  <td>{{ sale.created_by_user.full_name }}</td>
+                  <td>{{ sale.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <div class="pagination__summary">
+            Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+          </div>
+
+          <div class="pagination__actions">
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="page() <= 1"
+              (click)="goToPreviousPage()"
+            >
+              Anterior
+            </button>
+
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="page() >= totalPages()"
+              (click)="goToNextPage()"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      }
+    </article>
+
+    <article class="card">
+      <div class="card__header">
+        <h3>Detalle de venta</h3>
+      </div>
+
+      @if (isLoadingDetail()) {
+        <div class="state-box">Cargando detalle de la venta...</div>
+      } @else if (!selectedSale()) {
+        <div class="state-box">Selecciona una venta para ver el detalle.</div>
+      } @else {
+        <div class="sale-detail">
+          <div class="sale-detail__summary">
+            <div><strong>Venta:</strong> #{{ selectedSale()?.sale_number }}</div>
+            <div><strong>Pedido:</strong> {{ selectedSale()?.order_id }}</div>
+            <div>
+              <strong>Estado de pago:</strong>
+              <span [class]="getPaymentStatusBadgeClass(selectedSale()?.payment_status || '')">
+                {{ selectedSale()?.payment_status }}
+              </span>
+            </div>
+            <div><strong>Método:</strong> {{ getPaymentMethodLabel(selectedSale()?.payment_method || '') }}</div>
+            <div><strong>Subtotal:</strong> {{ selectedSale()?.subtotal | number:'1.2-2' }}</div>
+            <div><strong>Total:</strong> {{ selectedSale()?.total | number:'1.2-2' }}</div>
+            <div><strong>Usuario:</strong> {{ selectedSale()?.created_by_user?.full_name }}</div>
+            <div><strong>Fecha:</strong> {{ selectedSale()?.created_at | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+
+          <div class="subsection">
+            <h4>Items vendidos</h4>
+
+            @if ((selectedSale()?.items?.length || 0) === 0) {
+              <div class="state-box">Esta venta no tiene items asociados.</div>
+            } @else {
+              <div class="table-wrapper">
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Categoría</th>
+                      <th>Cantidad</th>
+                      <th>Unitario</th>
+                      <th>Total línea</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    @for (item of selectedSale()?.items || []; track item.id) {
+                      <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.product_category_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price | number:'1.2-2' }}</td>
+                        <td>{{ item.line_total | number:'1.2-2' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </article>
   </div>
 </section>

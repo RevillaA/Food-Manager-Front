@@ -1,0 +1,90 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="close()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal__header">
+        <div>
+          <h3>Cobrar pedido</h3>
+          <p>Registra el cobro del pedido cerrado.</p>
+        </div>
+
+        <button type="button" class="modal__close" (click)="close()">×</button>
+      </div>
+
+      @if (order()) {
+        <div class="modal__body">
+          <div class="order-summary">
+            <div><strong>Pedido:</strong> #{{ order()?.order_number }}</div>
+            <div><strong>Subtotal:</strong> {{ order()?.subtotal | number:'1.2-2' }}</div>
+            <div><strong>Items:</strong> {{ order()?.items?.length || 0 }}</div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="paymentStatus">Estado de pago</label>
+              <select
+                id="paymentStatus"
+                [(ngModel)]="paymentStatus"
+                [disabled]="isSubmitting()"
+              >
+                <option value="PAID">PAID</option>
+                <option value="PENDING">PENDING</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="paymentMethod">Método de pago</label>
+              <select
+                id="paymentMethod"
+                [(ngModel)]="paymentMethod"
+                [disabled]="isSubmitting()"
+              >
+                <option value="CASH">CASH</option>
+                <option value="TRANSFER">TRANSFER</option>
+              </select>
+            </div>
+
+            <div class="form-field form-field--full">
+              <label for="paymentNotes">Notas</label>
+              <textarea
+                id="paymentNotes"
+                rows="3"
+                [(ngModel)]="notes"
+                [disabled]="isSubmitting()"
+              ></textarea>
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="form-alert">
+              {{ errorMessage() }}
+            </div>
+          }
+        </div>
+
+        <div class="modal__actions">
+          <button
+            type="button"
+            class="button button--secondary"
+            [disabled]="isSubmitting()"
+            (click)="close()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            class="button button--primary"
+            [disabled]="!canSubmit() || isSubmitting()"
+            (click)="submit()"
+          >
+            @if (isSubmitting()) {
+              Procesando...
+            } @else {
+              Confirmar cobro
+            }
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,18 +1,305 @@
-<section class="page">
-  <div class="page__header">
-    <h2>Pedidos</h2>
-    <p>Pantalla principal de operación para el cajero y soporte para administración.</p>
+<section class="operations-page">
+  <div class="operations-page__header">
+    <div>
+      <h2>Operación del día</h2>
+      <p>Trabaja sobre la jornada activa con un flujo rápido tipo POS.</p>
+    </div>
+
+    <div class="header-actions">
+      @if (!activeSession()) {
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="isBusy()"
+          (click)="openTodaySession()"
+        >
+          Abrir jornada de hoy
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="isBusy()"
+          (click)="createNewOrder()"
+        >
+          Nuevo pedido
+        </button>
+      }
+    </div>
   </div>
 
-  <div class="placeholder-grid">
-    <article class="placeholder-card">
-      <h3>Punto de venta</h3>
-      <p>Aquí irá el flujo principal de pedidos, productos y pedido actual.</p>
-    </article>
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
 
-    <article class="placeholder-card">
-      <h3>Pedidos abiertos</h3>
-      <p>Aquí se mostrará la cola de pedidos en curso.</p>
-    </article>
-  </div>
+  <article class="session-banner">
+    @if (isLoadingSession()) {
+      <p>Cargando estado de la jornada...</p>
+    } @else if (activeSession()) {
+      <div class="session-banner__content">
+        <div><strong>Jornada activa:</strong> {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}</div>
+        <div><strong>Estado:</strong> {{ activeSession()?.status }}</div>
+        <div><strong>Abierta por:</strong> {{ activeSession()?.opened_by_user?.full_name }}</div>
+        <div><strong>Apertura:</strong> {{ activeSession()?.opened_at | date:'dd/MM/yyyy HH:mm' }}</div>
+      </div>
+    } @else {
+      <p>No existe jornada activa. Primero debes abrir la jornada del día.</p>
+    }
+  </article>
+
+  @if (activeSession()) {
+    <div class="operations-grid">
+      <article class="panel">
+        <div class="panel__header">
+          <h3>Pedidos abiertos</h3>
+        </div>
+
+        @if (isLoadingOrders()) {
+          <div class="state-box">Cargando pedidos...</div>
+        } @else if (openOrders().length === 0) {
+          <div class="state-box">No hay pedidos abiertos. Crea el primero.</div>
+        } @else {
+          <div class="order-queue">
+            @for (order of openOrders(); track order.id) {
+              <button
+                type="button"
+                class="order-card"
+                [class.order-card--selected]="selectedOrder()?.id === order.id"
+                (click)="selectOrder(order.id)"
+              >
+                <div class="order-card__top">
+                  <strong>#{{ order.order_number }}</strong>
+                  <span [class]="getPreparationBadgeClass(order.preparation_status)">
+                    {{ order.preparation_status }}
+                  </span>
+                </div>
+
+                <div class="order-card__meta">
+                  <span>Subtotal: {{ order.subtotal | number:'1.2-2' }}</span>
+                  <span>{{ order.created_at | date:'HH:mm' }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        }
+
+        <div class="panel__subheader">
+          <h4>Pedidos listos para cobrar</h4>
+        </div>
+
+        @if (isLoadingOrders()) {
+          <div class="state-box">Cargando pedidos cerrados...</div>
+        } @else if (closedOrders().length === 0) {
+          <div class="state-box">No hay pedidos cerrados pendientes en esta vista.</div>
+        } @else {
+          <div class="order-queue">
+            @for (order of closedOrders(); track order.id) {
+              <button
+                type="button"
+                class="order-card order-card--closed"
+                [class.order-card--selected]="selectedOrder()?.id === order.id"
+                (click)="selectOrder(order.id)"
+              >
+                <div class="order-card__top">
+                  <strong>#{{ order.order_number }}</strong>
+                  <span class="badge badge--success">CLOSED</span>
+                </div>
+
+                <div class="order-card__meta">
+                  <span>Subtotal: {{ order.subtotal | number:'1.2-2' }}</span>
+                  <span>{{ order.created_at | date:'HH:mm' }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </article>
+
+      <article class="panel">
+        <div class="panel__header">
+          <h3>Pedido actual</h3>
+        </div>
+
+        @if (isLoadingOrderDetail()) {
+          <div class="state-box">Cargando detalle del pedido...</div>
+        } @else if (!selectedOrder()) {
+          <div class="state-box">
+            Selecciona un pedido de la cola o crea uno nuevo para comenzar.
+          </div>
+        } @else {
+          <div class="order-detail">
+            <div class="order-detail__summary">
+              <div><strong>Pedido:</strong> #{{ selectedOrder()?.order_number }}</div>
+              <div>
+                <strong>Estado:</strong>
+                <span [class]="getOrderStatusBadgeClass(selectedOrder()?.status || '')">
+                  {{ selectedOrder()?.status }}
+                </span>
+              </div>
+              <div>
+                <strong>Preparación:</strong>
+                <span [class]="getPreparationBadgeClass(selectedOrder()?.preparation_status || '')">
+                  {{ selectedOrder()?.preparation_status }}
+                </span>
+              </div>
+              <div><strong>Subtotal:</strong> {{ selectedOrder()?.subtotal | number:'1.2-2' }}</div>
+            </div>
+
+            <div class="order-detail__actions">
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="!canOperateOrder() || isBusy()"
+                (click)="closeSelectedOrder()"
+              >
+                Cerrar pedido
+              </button>
+
+              <button
+                type="button"
+                class="danger-button"
+                [disabled]="!canOperateOrder() || isBusy()"
+                (click)="cancelSelectedOrder()"
+              >
+                Cancelar pedido
+              </button>
+
+              <button
+                type="button"
+                class="primary-button"
+                [disabled]="!canChargeOrder() || isBusy()"
+                (click)="openPaymentModal()"
+              >
+                Cobrar
+              </button>
+            </div>
+
+            <div class="items-list">
+              @if (selectedOrderItems().length === 0) {
+                <div class="state-box">
+                  Este pedido aún no tiene items. Usa el catálogo para agregar productos.
+                </div>
+              } @else {
+                @for (item of selectedOrderItems(); track item.id) {
+                  <div class="item-card">
+                    <div class="item-card__main">
+                      <strong>{{ item.product_name }}</strong>
+                      <span>{{ item.product_category_name }}</span>
+                      <span>Unitario: {{ item.unit_price | number:'1.2-2' }}</span>
+                    </div>
+
+                    <div class="item-card__controls">
+                      <div class="quantity-controls">
+                        <button
+                          type="button"
+                          [disabled]="!canOperateOrder() || isBusy()"
+                          (click)="decreaseItemQuantity(item)"
+                        >
+                          −
+                        </button>
+                        <span>{{ item.quantity }}</span>
+                        <button
+                          type="button"
+                          [disabled]="!canOperateOrder() || isBusy()"
+                          (click)="increaseItemQuantity(item)"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="secondary-button"
+                        [disabled]="!canOperateOrder() || isBusy()"
+                        (click)="toggleItemPreparationStatus(item)"
+                      >
+                        {{ item.preparation_status === 'IN_PROGRESS' ? 'Marcar servido' : 'Marcar en preparación' }}
+                      </button>
+
+                      <button
+                        type="button"
+                        class="danger-button"
+                        [disabled]="!canOperateOrder() || isBusy()"
+                        (click)="removeItem(item)"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+
+                    <div class="item-card__footer">
+                      <span [class]="getPreparationBadgeClass(item.preparation_status)">
+                        {{ item.preparation_status }}
+                      </span>
+                      <strong>Total: {{ item.line_total | number:'1.2-2' }}</strong>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </article>
+
+      <article class="panel">
+        <div class="panel__header">
+          <h3>Catálogo rápido</h3>
+        </div>
+
+        <div class="catalog-filters">
+          <select
+            [value]="selectedCategoryId()"
+            (change)="onCategoryFilterChange($event)"
+          >
+            <option value="">Todas las categorías</option>
+            @for (category of categories(); track category.id) {
+              <option [value]="category.id">
+                {{ category.name }} — {{ getCategoryTypeLabel(category.category_type) }}
+              </option>
+            }
+          </select>
+
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="!selectedCategoryId()"
+            (click)="clearCategoryFilter()"
+          >
+            Limpiar
+          </button>
+        </div>
+
+        @if (isLoadingProducts()) {
+          <div class="state-box">Cargando productos...</div>
+        } @else if (groupedProducts().length === 0) {
+          <div class="state-box">No hay productos activos para el filtro seleccionado.</div>
+        } @else {
+          <div class="catalog-grid">
+            @for (product of groupedProducts(); track product.id) {
+              <button
+                type="button"
+                class="product-card"
+                [disabled]="isBusy()"
+                (click)="addProductToOrder(product)"
+              >
+                <strong>{{ product.name }}</strong>
+                <span>{{ product.category.name }}</span>
+                <small>{{ product.base_price | number:'1.2-2' }}</small>
+              </button>
+            }
+          </div>
+        }
+      </article>
+    </div>
+  }
+
+  <app-quick-payment-modal
+    [isOpen]="isPaymentModalOpen()"
+    [isSubmitting]="isCreatingSale()"
+    [order]="selectedOrder()"
+    [errorMessage]="paymentErrorMessage()"
+    (closed)="closePaymentModal()"
+    (confirmed)="confirmPayment($event)"
+  />
 </section>

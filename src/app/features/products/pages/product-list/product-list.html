@@ -1,11 +1,147 @@
 <section class="page">
-  <div class="page__header">
-    <h2>Productos</h2>
-    <p>Módulo administrativo para gestión del catálogo.</p>
+  <div class="page__header page__header--actions">
+    <div>
+      <h2>Productos</h2>
+      <p>Gestión administrativa del catálogo de productos.</p>
+    </div>
+
+    <button type="button" class="primary-button" (click)="openCreateModal()">
+      Nuevo producto
+    </button>
   </div>
 
-  <article class="placeholder-card">
-    <h3>Catálogo</h3>
-    <p>Aquí se mostrará la lista de productos, filtros y acciones administrativas.</p>
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <article class="filters-card">
+    <div class="filters">
+      <div class="filters__field">
+        <label for="categoryFilter">Filtrar por categoría</label>
+        <select
+          id="categoryFilter"
+          [value]="selectedCategoryId()"
+          (change)="onCategoryFilterChange($event)"
+        >
+          <option value="">Todas las categorías</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id">
+              {{ category.name }} — {{ getCategoryTypeLabel(category.category_type) }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="!selectedCategoryId()"
+        (click)="clearCategoryFilter()"
+      >
+        Limpiar filtro
+      </button>
+    </div>
+  </article>
+
+  <article class="card">
+    @if (isLoading()) {
+      <div class="state-box">Cargando productos...</div>
+    } @else if (products().length === 0) {
+      <div class="state-box">No hay productos registrados para los filtros seleccionados.</div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Tipo</th>
+              <th>Precio</th>
+              <th>Estado</th>
+              <th>Creado</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (product of products(); track product.id) {
+              <tr>
+                <td>
+                  <div class="product-name">
+                    <strong>{{ product.name }}</strong>
+                    <span>{{ product.description || 'Sin descripción' }}</span>
+                  </div>
+                </td>
+                <td>{{ product.category.name }}</td>
+                <td>{{ getCategoryTypeLabel(product.category.category_type) }}</td>
+                <td>{{ product.base_price | number:'1.2-2' }}</td>
+                <td>
+                  <app-product-status-toggle
+                    [isActive]="product.is_active"
+                    [disabled]="isStatusLoading() === product.id"
+                    (toggled)="toggleProductStatus(product)"
+                  />
+                </td>
+                <td>{{ product.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    class="table-button"
+                    [disabled]="!product.is_active"
+                    (click)="openEditModal(product)"
+                  >
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination__summary">
+          Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+        </div>
+
+        <div class="pagination__actions">
+          <button
+            type="button"
+            class="pagination__button"
+            [disabled]="page() <= 1"
+            (click)="goToPreviousPage()"
+          >
+            Anterior
+          </button>
+
+          <button
+            type="button"
+            class="pagination__button"
+            [disabled]="page() >= totalPages()"
+            (click)="goToNextPage()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
   </article>
 </section>
+
+<app-product-form-modal
+  [isOpen]="isCreateModalOpen()"
+  [mode]="'create'"
+  [product]="null"
+  (closed)="closeCreateModal()"
+  (saved)="handleCreated()"
+/>
+
+<app-product-form-modal
+  [isOpen]="isEditModalOpen()"
+  [mode]="'edit'"
+  [product]="selectedProduct()"
+  (closed)="closeEditModal()"
+  (saved)="handleUpdated()"
+/>

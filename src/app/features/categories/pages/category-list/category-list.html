@@ -1,11 +1,111 @@
 <section class="page">
-  <div class="page__header">
-    <h2>Categorías</h2>
-    <p>Módulo administrativo para clasificación de productos.</p>
+  <div class="page__header page__header--actions">
+    <div>
+      <h2>Categorías</h2>
+      <p>Gestión administrativa de categorías del sistema.</p>
+    </div>
+
+    <button type="button" class="primary-button" (click)="openCreateModal()">
+      Nueva categoría
+    </button>
   </div>
 
-  <article class="placeholder-card">
-    <h3>Gestión de categorías</h3>
-    <p>Aquí se mostrará la lista de categorías y sus acciones principales.</p>
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <article class="card">
+    @if (isLoading()) {
+      <div class="state-box">Cargando categorías...</div>
+    } @else if (categories().length === 0) {
+      <div class="state-box">No hay categorías registradas.</div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="categories-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Creada</th>
+              <th class="text-right">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (category of categories(); track category.id) {
+              <tr>
+                <td>{{ category.name }}</td>
+                <td>{{ getCategoryTypeLabel(category.category_type) }}</td>
+                <td>{{ category.description || '—' }}</td>
+                <td>
+                  <app-category-status-toggle
+                    [isActive]="category.is_active"
+                    [disabled]="isStatusLoading() === category.id"
+                    (toggled)="toggleCategoryStatus(category)"
+                  />
+                </td>
+                <td>{{ category.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-right">
+                  <button
+                    type="button"
+                    class="table-button"
+                    [disabled]="!category.is_active"
+                    (click)="openEditModal(category)"
+                  >
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination__summary">
+          Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+        </div>
+
+        <div class="pagination__actions">
+          <button
+            type="button"
+            class="pagination__button"
+            [disabled]="page() <= 1"
+            (click)="goToPreviousPage()"
+          >
+            Anterior
+          </button>
+
+          <button
+            type="button"
+            class="pagination__button"
+            [disabled]="page() >= totalPages()"
+            (click)="goToNextPage()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
   </article>
 </section>
+
+<app-category-form-modal
+  [isOpen]="isCreateModalOpen()"
+  [mode]="'create'"
+  [category]="null"
+  (closed)="closeCreateModal()"
+  (saved)="handleCreated()"
+/>
+
+<app-category-form-modal
+  [isOpen]="isEditModalOpen()"
+  [mode]="'edit'"
+  [category]="selectedCategory()"
+  (closed)="closeEditModal()"
+  (saved)="handleUpdated()"
+/>

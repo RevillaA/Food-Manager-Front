@@ -1,11 +1,232 @@
 <section class="page">
   <div class="page__header">
-    <h2>Jornada</h2>
-    <p>Módulo administrativo para control de la jornada diaria.</p>
+    <div>
+      <h2>Jornadas</h2>
+      <p>Control, auditoría e historial de jornadas operativas.</p>
+    </div>
+
+    <button
+      type="button"
+      class="primary-button"
+      [disabled]="isSessionActionLoading() === 'open' || !!activeSession()"
+      (click)="openTodaySession()"
+    >
+      Abrir jornada de hoy
+    </button>
   </div>
 
-  <article class="placeholder-card">
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <article class="summary-card">
     <h3>Jornada activa</h3>
-    <p>Aquí se visualizará el estado de la jornada actual y sus acciones principales.</p>
+
+    @if (isActiveLoading()) {
+      <p>Cargando jornada activa...</p>
+    } @else if (activeSession()) {
+      <div class="session-summary">
+        <div><strong>Fecha:</strong> {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}</div>
+        <div><strong>Estado:</strong> {{ activeSession()?.status }}</div>
+        <div><strong>Apertura:</strong> {{ activeSession()?.opened_at | date:'dd/MM/yyyy HH:mm' }}</div>
+        <div><strong>Abierta por:</strong> {{ activeSession()?.opened_by_user?.full_name }}</div>
+      </div>
+    } @else {
+      <p>No existe jornada activa en este momento.</p>
+    }
   </article>
+
+  <article class="filters-card">
+    <div class="filters">
+      <div class="filters__field">
+        <label for="statusFilter">Estado</label>
+        <select
+          id="statusFilter"
+          [value]="statusFilter()"
+          (change)="onStatusFilterChange($event)"
+        >
+          <option value="">Todos</option>
+          <option value="OPEN">OPEN</option>
+          <option value="CLOSED">CLOSED</option>
+        </select>
+      </div>
+
+      <div class="filters__field">
+        <label for="dateFilter">Fecha</label>
+        <input
+          id="dateFilter"
+          type="date"
+          [value]="dateFilter()"
+          (change)="onDateFilterChange($event)"
+        />
+      </div>
+
+      <div class="filters__actions">
+        <button type="button" class="secondary-button" (click)="applyFilters()">
+          Aplicar filtros
+        </button>
+
+        <button type="button" class="secondary-button" (click)="clearFilters()">
+          Limpiar
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <div class="content-grid">
+    <article class="card">
+      <div class="card__header">
+        <h3>Lista de jornadas</h3>
+      </div>
+
+      @if (isLoading()) {
+        <div class="state-box">Cargando jornadas...</div>
+      } @else if (sessions().length === 0) {
+        <div class="state-box">No hay jornadas registradas.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="sessions-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Apertura</th>
+                <th>Cierre</th>
+                <th>Abierta por</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (session of sessions(); track session.id) {
+                <tr
+                  [class.row-selected]="selectedSession()?.id === session.id"
+                  (click)="selectSession(session)"
+                >
+                  <td>{{ session.session_date | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ session.status }}</td>
+                  <td>{{ session.opened_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ session.closed_at ? (session.closed_at | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+                  <td>{{ session.opened_by_user.full_name }}</td>
+                  <td class="text-right">
+                    @if (session.status === 'OPEN') {
+                      <button
+                        type="button"
+                        class="table-button"
+                        [disabled]="isSessionActionLoading() === session.id"
+                        (click)="$event.stopPropagation(); closeSession(session)"
+                      >
+                        Cerrar
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="table-button"
+                        [disabled]="isSessionActionLoading() === session.id || !!activeSession()"
+                        (click)="$event.stopPropagation(); reopenSession(session)"
+                      >
+                        Reabrir
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <div class="pagination__summary">
+            Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+          </div>
+
+          <div class="pagination__actions">
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="page() <= 1"
+              (click)="goToPreviousPage()"
+            >
+              Anterior
+            </button>
+
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="page() >= totalPages()"
+              (click)="goToNextPage()"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      }
+    </article>
+
+    <article class="card">
+      <div class="card__header">
+        <h3>Detalle de jornada</h3>
+      </div>
+
+      @if (!selectedSession()) {
+        <div class="state-box">Selecciona una jornada para ver su detalle.</div>
+      } @else {
+        <div class="session-detail">
+          <div><strong>Fecha:</strong> {{ selectedSession()?.session_date | date:'dd/MM/yyyy' }}</div>
+          <div><strong>Estado:</strong> {{ selectedSession()?.status }}</div>
+          <div><strong>Notas:</strong> {{ selectedSession()?.notes || '—' }}</div>
+          <div><strong>Abierta por:</strong> {{ selectedSession()?.opened_by_user?.full_name }}</div>
+          <div><strong>Cerrada por:</strong> {{ selectedSession()?.closed_by_user?.full_name || '—' }}</div>
+        </div>
+
+        <div class="subsection">
+          <h4>Pedidos asociados</h4>
+
+          @if (isOrdersLoading()) {
+            <div class="state-box">Cargando pedidos de la jornada...</div>
+          } @else if (selectedSessionOrders().length === 0) {
+            <div class="state-box">No hay pedidos registrados en esta jornada.</div>
+          } @else {
+            <div class="table-wrapper">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Estado</th>
+                    <th>Preparación</th>
+                    <th>Subtotal</th>
+                    <th>Creado por</th>
+                    <th>Hora</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (order of selectedSessionOrders(); track order.id) {
+                    <tr>
+                      <td>#{{ order.order_number }}</td>
+                      <td>
+                        <span [class]="getOrderStatusBadgeClass(order.status)">
+                          {{ order.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <span [class]="getPreparationBadgeClass(order.preparation_status)">
+                          {{ order.preparation_status }}
+                        </span>
+                      </td>
+                      <td>{{ order.subtotal | number:'1.2-2' }}</td>
+                      <td>{{ order.created_by_user.full_name }}</td>
+                      <td>{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </article>
+  </div>
 </section>

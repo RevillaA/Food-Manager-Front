@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="status-toggle"
+  [class.status-toggle--active]="isActive()"
+  [class.status-toggle--inactive]="!isActive()"
+  [disabled]="disabled()"
+  (click)="handleClick()"
+>
+  {{ isActive() ? 'Activo' : 'Inactivo' }}
+</button>
