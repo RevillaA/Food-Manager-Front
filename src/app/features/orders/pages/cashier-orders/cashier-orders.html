@@ -56,7 +56,7 @@
           <h3>Pedidos abiertos</h3>
         </div>
 
-        @if (isLoadingOrders()) {
+        @if (isLoadingOrders() || isLoadingSales()) {
           <div class="state-box">Cargando pedidos...</div>
         } @else if (openOrders().length === 0) {
           <div class="state-box">No hay pedidos abiertos. Crea el primero.</div>
@@ -89,13 +89,13 @@
           <h4>Pedidos listos para cobrar</h4>
         </div>
 
-        @if (isLoadingOrders()) {
+        @if (isLoadingOrders() || isLoadingSales()) {
           <div class="state-box">Cargando pedidos cerrados...</div>
-        } @else if (closedOrders().length === 0) {
-          <div class="state-box">No hay pedidos cerrados pendientes en esta vista.</div>
+        } @else if (closedOrdersPendingPayment().length === 0) {
+          <div class="state-box">No hay pedidos cerrados pendientes de cobro.</div>
         } @else {
           <div class="order-queue">
-            @for (order of closedOrders(); track order.id) {
+            @for (order of closedOrdersPendingPayment(); track order.id) {
               <button
                 type="button"
                 class="order-card order-card--closed"
@@ -146,6 +146,12 @@
               </div>
               <div><strong>Subtotal:</strong> {{ selectedOrder()?.subtotal | number:'1.2-2' }}</div>
             </div>
+
+            @if (isSelectedOrderPaid()) {
+              <div class="info-banner">
+                Este pedido ya fue cobrado y se conserva solo como histórico.
+              </div>
+            }
 
             <div class="order-detail__actions">
               <button

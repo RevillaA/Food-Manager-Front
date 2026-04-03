@@ -27,6 +27,7 @@ import { ProductsService } from '../../../products/services/products';
 
 import { SalesService } from '../../../sales/services/sales';
 import { CreateSaleRequest } from '../../../sales/models/create-sale-request.interface';
+import { Sale } from '../../../sales/models/sale.interface';
 import { QuickPaymentModal } from '../../../sales/components/quick-payment-modal/quick-payment-modal';
 
 @Component({
@@ -49,6 +50,7 @@ export class CashierOrders implements OnInit {
   readonly isLoadingOrderDetail = signal(false);
   readonly isLoadingCategories = signal(false);
   readonly isLoadingProducts = signal(false);
+  readonly isLoadingSales = signal(false);
 
   readonly isCreatingOrder = signal(false);
   readonly isAddingProduct = signal(false);
@@ -62,7 +64,8 @@ export class CashierOrders implements OnInit {
 
   readonly activeSession = signal<DailySession | null>(null);
   readonly openOrders = signal<Order[]>([]);
-  readonly closedOrders = signal<Order[]>([]);
+  readonly closedOrdersPendingPayment = signal<Order[]>([]);
+  readonly paidSales = signal<Sale[]>([]);
   readonly selectedOrder = signal<OrderDetail | null>(null);
 
   readonly categories = signal<Category[]>([]);
@@ -71,16 +74,36 @@ export class CashierOrders implements OnInit {
 
   readonly isPaymentModalOpen = signal(false);
 
+  readonly paidOrderIds = computed(() => {
+    return new Set(this.paidSales().map((sale) => sale.order_id));
+  });
+
   readonly hasActiveSession = computed(() => !!this.activeSession());
   readonly hasSelectedOrder = computed(() => !!this.selectedOrder());
   readonly selectedOrderItems = computed(() => this.selectedOrder()?.items ?? []);
+
+  readonly isSelectedOrderPaid = computed(() => {
+    const order = this.selectedOrder();
+    if (!order) {
+      return false;
+    }
+
+    return this.paidOrderIds().has(order.id);
+  });
+
   readonly canOperateOrder = computed(() => {
     const order = this.selectedOrder();
     return !!order && order.status === 'OPEN';
   });
+
   readonly canChargeOrder = computed(() => {
     const order = this.selectedOrder();
-    return !!order && order.status === 'CLOSED';
+
+    return (
+      !!order &&
+      order.status === 'CLOSED' &&
+      !this.paidOrderIds().has(order.id)
+    );
   });
 
   readonly isBusy = computed(() => {
@@ -118,7 +141,7 @@ export class CashierOrders implements OnInit {
       next: (response) => {
         this.activeSession.set(response.data);
         this.isLoadingSession.set(false);
-        this.loadOrders(selectedOrderId);
+        this.loadOrdersAndSales(selectedOrderId);
       },
       error: (error: HttpErrorResponse) => {
         this.isLoadingSession.set(false);
@@ -126,7 +149,8 @@ export class CashierOrders implements OnInit {
         if (error.status === 404) {
           this.activeSession.set(null);
           this.openOrders.set([]);
-          this.closedOrders.set([]);
+          this.closedOrdersPendingPayment.set([]);
+          this.paidSales.set([]);
           this.selectedOrder.set(null);
           return;
         }
@@ -181,54 +205,100 @@ export class CashierOrders implements OnInit {
       });
   }
 
-  loadOrders(selectedOrderId?: string): void {
+  loadOrdersAndSales(selectedOrderId?: string): void {
     const session = this.activeSession();
 
     if (!session) {
       this.openOrders.set([]);
-      this.closedOrders.set([]);
+      this.closedOrdersPendingPayment.set([]);
+      this.paidSales.set([]);
       this.selectedOrder.set(null);
       return;
     }
 
     this.isLoadingOrders.set(true);
+    this.isLoadingSales.set(true);
 
     this.ordersService
       .getOrders(1, 100, {
         daily_session_id: session.id,
       })
       .subscribe({
-        next: (response: OrdersListResponse) => {
-          const sorted = [...response.data].sort((a, b) => {
-            if (a.order_number !== b.order_number) {
-              return a.order_number - b.order_number;
-            }
+        next: (ordersResponse: OrdersListResponse) => {
+          this.salesService
+            .getSales(1, 100, {
+              daily_session_id: session.id,
+            })
+            .subscribe({
+              next: (salesResponse) => {
+                const sortedOrders = [...ordersResponse.data].sort((a, b) => {
+                  if (a.order_number !== b.order_number) {
+                    return a.order_number - b.order_number;
+                  }
 
-            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          });
+                  return (
+                    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                  );
+                });
 
-          this.openOrders.set(sorted.filter((order) => order.status === 'OPEN'));
-          this.closedOrders.set(sorted.filter((order) => order.status === 'CLOSED'));
-          this.isLoadingOrders.set(false);
+                const paidOrderIds = new Set(
+                  salesResponse.data.map((sale) => sale.order_id)
+                );
 
-          const preferredOrderId = selectedOrderId || this.selectedOrder()?.id;
+                this.paidSales.set(salesResponse.data);
+                this.openOrders.set(
+                  sortedOrders.filter((order) => order.status === 'OPEN')
+                );
+                this.closedOrdersPendingPayment.set(
+                  sortedOrders.filter(
+                    (order) =>
+                      order.status === 'CLOSED' && !paidOrderIds.has(order.id)
+                  )
+                );
 
-          if (preferredOrderId) {
-            const exists = sorted.some((order) => order.id === preferredOrderId);
-            if (exists) {
-              this.selectOrder(preferredOrderId);
-              return;
-            }
-          }
+                this.isLoadingOrders.set(false);
+                this.isLoadingSales.set(false);
 
-          if (sorted.length > 0) {
-            this.selectOrder(sorted[0].id);
-          } else {
-            this.selectedOrder.set(null);
-          }
+                const preferredOrderId = selectedOrderId || this.selectedOrder()?.id;
+
+                if (preferredOrderId) {
+                  const existsOpen = this.openOrders().some(
+                    (order) => order.id === preferredOrderId
+                  );
+                  const existsClosedPending = this.closedOrdersPendingPayment().some(
+                    (order) => order.id === preferredOrderId
+                  );
+
+                  if (existsOpen || existsClosedPending) {
+                    this.selectOrder(preferredOrderId);
+                    return;
+                  }
+                }
+
+                if (this.openOrders().length > 0) {
+                  this.selectOrder(this.openOrders()[0].id);
+                  return;
+                }
+
+                if (this.closedOrdersPendingPayment().length > 0) {
+                  this.selectOrder(this.closedOrdersPendingPayment()[0].id);
+                  return;
+                }
+
+                this.selectedOrder.set(null);
+              },
+              error: (error: HttpErrorResponse) => {
+                this.isLoadingOrders.set(false);
+                this.isLoadingSales.set(false);
+                this.errorMessage.set(
+                  error.error?.message || 'No se pudieron cargar las ventas de la jornada.'
+                );
+              },
+            });
         },
         error: (error: HttpErrorResponse) => {
           this.isLoadingOrders.set(false);
+          this.isLoadingSales.set(false);
           this.errorMessage.set(
             error.error?.message || 'No se pudieron cargar los pedidos de la jornada.'
           );
@@ -565,9 +635,22 @@ export class CashierOrders implements OnInit {
 
     this.salesService.createSale(payload).subscribe({
       next: () => {
+        const paidOrderId = payload.order_id;
+
         this.isCreatingSale.set(false);
         this.isPaymentModalOpen.set(false);
-        this.loadActiveSessionAndOrders();
+
+        const remainingClosedOrders = this.closedOrdersPendingPayment().filter(
+          (order) => order.id !== paidOrderId
+        );
+        this.closedOrdersPendingPayment.set(remainingClosedOrders);
+
+        const nextSelectedOrderId =
+          this.openOrders()[0]?.id ||
+          remainingClosedOrders[0]?.id ||
+          undefined;
+
+        this.loadActiveSessionAndOrders(nextSelectedOrderId);
       },
       error: (error: HttpErrorResponse) => {
         this.isCreatingSale.set(false);
