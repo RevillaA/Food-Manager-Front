@@ -1,27 +1,58 @@
-<section class="page">
-  <div class="page__header page__header--actions">
+<section class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div>
-      <h2>Productos</h2>
-      <p>Gestión administrativa del catálogo de productos.</p>
+      <h1 class="text-2xl font-black text-[#111111]">Productos</h1>
+      <p class="mt-1 text-sm text-gray-500">
+        Gestión administrativa del catálogo de productos.
+      </p>
     </div>
 
-    <button type="button" class="primary-button" (click)="openCreateModal()">
+    <button
+      type="button"
+      class="inline-flex items-center justify-center rounded-2xl bg-[#E2552E] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#E2552E]/20 transition hover:-translate-y-0.5 hover:bg-[#C94724] disabled:opacity-70"
+      (click)="openCreateModal()"
+    >
       Nuevo producto
     </button>
   </div>
 
   @if (errorMessage()) {
-    <div class="alert alert--error">
-      {{ errorMessage() }}
+    <div
+      class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm"
+    >
+      <div class="mt-0.5 text-red-500">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.5 18h17a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"
+          />
+        </svg>
+      </div>
+
+      <div class="flex-1 leading-5">
+        {{ errorMessage() }}
+      </div>
     </div>
   }
 
-  <article class="filters-card">
-    <div class="filters">
-      <div class="filters__field">
-        <label for="categoryFilter">Filtrar por categoría</label>
+  <article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div class="w-full max-w-md space-y-2">
+        <label for="categoryFilter" class="text-sm font-semibold text-[#111111]">
+          Filtrar por categoría
+        </label>
+
         <select
           id="categoryFilter"
+          class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#111111] outline-none transition focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
           [value]="selectedCategoryId()"
           (change)="onCategoryFilterChange($event)"
         >
@@ -36,7 +67,7 @@
 
       <button
         type="button"
-        class="secondary-button"
+        class="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#111111] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         [disabled]="!selectedCategoryId()"
         (click)="clearCategoryFilter()"
       >
@@ -45,50 +76,110 @@
     </div>
   </article>
 
-  <article class="card">
+  <article class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
     @if (isLoading()) {
-      <div class="state-box">Cargando productos...</div>
+      <div class="flex min-h-[220px] items-center justify-center px-6 py-10">
+        <div class="text-center">
+          <div
+            class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-[#E2552E]"
+          ></div>
+          <p class="text-sm font-medium text-gray-500">Cargando productos...</p>
+        </div>
+      </div>
     } @else if (products().length === 0) {
-      <div class="state-box">No hay productos registrados para los filtros seleccionados.</div>
+      <div class="flex min-h-[220px] items-center justify-center px-6 py-10">
+        <div class="text-center">
+          <p class="text-base font-semibold text-[#111111]">
+            No hay productos registrados para los filtros seleccionados
+          </p>
+          <p class="mt-1 text-sm text-gray-500">
+            Ajusta el filtro o crea un nuevo producto.
+          </p>
+        </div>
+      </div>
     } @else {
-      <div class="table-wrapper">
-        <table class="products-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Tipo</th>
-              <th>Precio</th>
-              <th>Estado</th>
-              <th>Creado</th>
-              <th class="text-right">Acciones</th>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-[#FFF8EF]">
+            <tr class="border-b border-[#f1ebe3]">
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Nombre
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Categoría
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Tipo
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Precio
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Estado
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Creado
+              </th>
+              <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Acciones
+              </th>
             </tr>
           </thead>
 
           <tbody>
             @for (product of products(); track product.id) {
-              <tr>
-                <td>
-                  <div class="product-name">
-                    <strong>{{ product.name }}</strong>
-                    <span>{{ product.description || 'Sin descripción' }}</span>
+              <tr class="border-b border-gray-100 last:border-b-0">
+                <td class="px-6 py-4 align-middle">
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F6E7A7] text-sm font-bold text-[#111111]"
+                    >
+                      {{ getProductInitial(product.name) }}
+                    </div>
+
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-semibold text-[#111111]">
+                        {{ product.name }}
+                      </p>
+                      <p class="mt-0.5 text-sm text-gray-500">
+                        {{ product.description || 'Sin descripción' }}
+                      </p>
+                    </div>
                   </div>
                 </td>
-                <td>{{ product.category.name }}</td>
-                <td>{{ getCategoryTypeLabel(product.category.category_type) }}</td>
-                <td>{{ product.base_price | number:'1.2-2' }}</td>
-                <td>
+
+                <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                  {{ product.category.name }}
+                </td>
+
+                <td class="px-6 py-4 align-middle">
+                  <span
+                    class="inline-flex rounded-full bg-[#E2552E]/10 px-3 py-1 text-xs font-semibold text-[#E2552E]"
+                  >
+                    {{ getCategoryTypeLabel(product.category.category_type) }}
+                  </span>
+                </td>
+
+                <td class="px-6 py-4 align-middle text-sm font-semibold text-[#111111]">
+                  $ {{ product.base_price | number:'1.2-2' }}
+                </td>
+
+                <td class="px-6 py-4 align-middle">
                   <app-product-status-toggle
                     [isActive]="product.is_active"
                     [disabled]="isStatusLoading() === product.id"
                     (toggled)="toggleProductStatus(product)"
                   />
                 </td>
-                <td>{{ product.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td class="text-right">
+
+                <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                  {{ product.created_at | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+
+                <td class="px-6 py-4 text-right align-middle">
                   <button
                     type="button"
-                    class="table-button"
+                    class="inline-flex items-center justify-center rounded-xl border border-[#eadfd2] bg-[#fff8ef] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:-translate-y-0.5 hover:border-[#E2552E]/30 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                     [disabled]="!product.is_active"
                     (click)="openEditModal(product)"
                   >
@@ -101,15 +192,19 @@
         </table>
       </div>
 
-      <div class="pagination">
-        <div class="pagination__summary">
-          Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+      <div
+        class="flex flex-col gap-4 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="text-sm text-gray-500">
+          Página <span class="font-semibold text-[#111111]">{{ page() }}</span>
+          de <span class="font-semibold text-[#111111]">{{ totalPages() }}</span>
+          · Total: <span class="font-semibold text-[#111111]">{{ total() }}</span>
         </div>
 
-        <div class="pagination__actions">
+        <div class="flex gap-3">
           <button
             type="button"
-            class="pagination__button"
+            class="inline-flex flex-1 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
             [disabled]="page() <= 1"
             (click)="goToPreviousPage()"
           >
@@ -118,7 +213,7 @@
 
           <button
             type="button"
-            class="pagination__button"
+            class="inline-flex flex-1 items-center justify-center rounded-xl bg-[#111111] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E2552E] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
             [disabled]="page() >= totalPages()"
             (click)="goToNextPage()"
           >

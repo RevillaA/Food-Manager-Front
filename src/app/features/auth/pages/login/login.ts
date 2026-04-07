@@ -91,6 +91,12 @@ export class Login {
       status?: number;
     };
 
+    const message = httpError.error?.message?.toLowerCase();
+
+    if (message?.includes('invalid username') || message?.includes('invalid password')) {
+    return 'Usuario o contraseña incorrectos.';
+    }
+
     if (httpError.status === 401) {
       return httpError.error?.message || 'Usuario o contraseña incorrectos.';
     }

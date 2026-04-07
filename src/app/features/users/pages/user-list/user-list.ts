@@ -149,4 +149,21 @@ export class UserList implements OnInit {
   isSelfUser(user: User): boolean {
     return user.id === this.currentUser()?.id;
   }
+
+  getRoleLabel(role?: string | null): string {
+    const rolesMap: Record<string, string> = {
+      ADMIN: 'Administrador',
+      CASHIER: 'Cajero',
+    };
+
+    return role ? rolesMap[role] ?? role : '';
+  }
+
+  getUserInitial(fullName?: string | null): string {
+    if (!fullName) {
+      return 'U';
+    }
+
+    return fullName.trim().charAt(0).toUpperCase();
+  }
 }

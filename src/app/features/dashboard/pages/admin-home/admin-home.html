@@ -1,18 +1,177 @@
-<section class="page">
-  <div class="page__header">
-    <h2>Inicio</h2>
-    <p>Vista general para administración.</p>
+<section class="dashboard-page">
+  <div class="dashboard-page__header">
+    <div>
+      <h2>Inicio</h2>
+      <p>Vista ejecutiva del negocio y accesos rápidos de administración.</p>
+    </div>
+
+    <button type="button" class="primary-button" (click)="loadDashboard()">
+      Actualizar
+    </button>
   </div>
 
-  <div class="placeholder-grid">
-    <article class="placeholder-card">
-      <h3>Resumen del día</h3>
-      <p>Aquí irá el resumen general del negocio para el administrador.</p>
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <article class="session-banner">
+    @if (isLoading()) {
+      <p>Cargando estado del negocio...</p>
+    } @else if (activeSession()) {
+      <div class="session-banner__content">
+        <div><strong>Jornada activa:</strong> {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}</div>
+        <div><strong>Estado:</strong> {{ activeSession()?.status }}</div>
+        <div><strong>Abierta por:</strong> {{ activeSession()?.opened_by_user?.full_name }}</div>
+        <div><strong>Apertura:</strong> {{ activeSession()?.opened_at | date:'dd/MM/yyyy HH:mm' }}</div>
+      </div>
+    } @else {
+      <p>No existe jornada activa en este momento.</p>
+    }
+  </article>
+
+  <div class="kpi-grid">
+    <article class="kpi-card">
+      <h3>Ventas del día</h3>
+      <strong>{{ salesOfToday().length }}</strong>
+      <p>Ventas registradas en la jornada actual.</p>
     </article>
 
-    <article class="placeholder-card">
+    <article class="kpi-card">
+      <h3>Total vendido hoy</h3>
+      <strong>{{ totalSoldToday() | number:'1.2-2' }}</strong>
+      <p>Ingresos acumulados del día.</p>
+    </article>
+
+    <article class="kpi-card">
+      <h3>Pedidos abiertos</h3>
+      <strong>{{ openOrdersCount() }}</strong>
+      <p>Pedidos todavía en operación.</p>
+    </article>
+
+    <article class="kpi-card">
+      <h3>Listos para cobrar</h3>
+      <strong>{{ pendingPaymentOrdersCount() }}</strong>
+      <p>Pedidos cerrados pendientes de venta.</p>
+    </article>
+
+    <article class="kpi-card">
+      <h3>Ventas pagadas</h3>
+      <strong>{{ paidSalesCount() }}</strong>
+      <p>Ventas finalizadas correctamente.</p>
+    </article>
+
+    <article class="kpi-card">
+      <h3>Ventas pendientes</h3>
+      <strong>{{ pendingSalesCount() }}</strong>
+      <p>Ventas registradas con pago pendiente.</p>
+    </article>
+
+    <article class="kpi-card">
+      <h3>Ticket promedio</h3>
+      <strong>{{ averageTicketToday() | number:'1.2-2' }}</strong>
+      <p>Promedio por venta del día.</p>
+    </article>
+  </div>
+
+  <article class="card">
+    <div class="card__header">
       <h3>Accesos rápidos</h3>
-      <p>Desde esta pantalla podrás navegar a módulos administrativos clave.</p>
+    </div>
+
+    <div class="quick-access-grid">
+      @for (item of quickAccessItems; track item.route) {
+        <a class="quick-access-card" [routerLink]="item.route">
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          <div>
+            <strong>{{ item.title }}</strong>
+            <p>{{ item.description }}</p>
+          </div>
+        </a>
+      }
+    </div>
+  </article>
+
+  <div class="content-grid">
+    <article class="card">
+      <div class="card__header">
+        <h3>Pedidos abiertos prioritarios</h3>
+      </div>
+
+      @if (isLoading()) {
+        <div class="state-box">Cargando pedidos...</div>
+      } @else if (recentOpenOrders().length === 0) {
+        <div class="state-box">No hay pedidos abiertos en la jornada activa.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th># Pedido</th>
+                <th>Preparación</th>
+                <th>Subtotal</th>
+                <th>Hora</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (order of recentOpenOrders(); track order.id) {
+                <tr>
+                  <td>#{{ order.order_number }}</td>
+                  <td>
+                    <span [class]="getPreparationBadgeClass(order.preparation_status)">
+                      {{ order.preparation_status }}
+                    </span>
+                  </td>
+                  <td>{{ order.subtotal | number:'1.2-2' }}</td>
+                  <td>{{ order.created_at | date:'HH:mm' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+
+    <article class="card">
+      <div class="card__header">
+        <h3>Últimas ventas del día</h3>
+      </div>
+
+      @if (isLoading()) {
+        <div class="state-box">Cargando ventas...</div>
+      } @else if (recentSales().length === 0) {
+        <div class="state-box">No hay ventas registradas hoy.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th># Venta</th>
+                <th>Pago</th>
+                <th>Método</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (sale of recentSales(); track sale.id) {
+                <tr>
+                  <td>#{{ sale.sale_number }}</td>
+                  <td>
+                    <span [class]="getPaymentStatusBadgeClass(sale.payment_status)">
+                      {{ sale.payment_status }}
+                    </span>
+                  </td>
+                  <td>{{ getPaymentMethodLabel(sale.payment_method) }}</td>
+                  <td>{{ sale.total | number:'1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </article>
   </div>
 </section>

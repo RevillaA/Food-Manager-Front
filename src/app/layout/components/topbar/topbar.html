@@ -1,34 +1,32 @@
-<header class="topbar">
-  <div class="topbar__left">
+<header class="flex items-center justify-between border-b bg-white px-5 py-4">
+  
+  <div class="flex items-center gap-3">
     <button
-      type="button"
-      class="topbar__icon-button"
-      aria-label="Alternar menú"
+      class="h-10 w-10 rounded-xl bg-gray-100 hover:bg-gray-200 transition"
       (click)="toggleSidebar.emit()"
     >
       <span class="material-symbols-outlined">menu</span>
     </button>
 
-    <div class="topbar__title">
-      <h1>Panel privado</h1>
-      <p>Gestión interna del sistema</p>
+    <div>
+      <h1 class="text-lg font-bold text-[#111111]">Panel</h1>
+      <p class="text-xs text-gray-500">Gestión del sistema</p>
     </div>
   </div>
 
-  <div class="topbar__right">
+  <div class="flex items-center gap-4">
     @if (currentUser()) {
-      <div class="topbar__user">
-        <strong>{{ currentUser()?.full_name }}</strong>
-        <span>{{ currentUser()?.role?.name }}</span>
+      <div class="text-right">
+        <p class="text-sm font-semibold">{{ currentUser()?.full_name }}</p>
+        <p class="text-xs text-gray-500">{{ getRoleLabel(currentUser()?.role?.name) }}</p>
       </div>
     }
 
     <button
-      type="button"
-      class="topbar__logout-button"
+      class="rounded-xl bg-[#111111] px-4 py-2 text-sm text-white hover:bg-[#E2552E] transition"
       (click)="logout()"
     >
-      Cerrar sesión
+      Salir
     </button>
   </div>
 </header>

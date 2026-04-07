@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Output,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -71,6 +72,26 @@ export class CategoryFormModal {
     description: this.fb.control<string | null>('', [Validators.maxLength(200)]),
   });
 
+  constructor() {
+    effect(
+      () => {
+        const open = this.isOpen();
+        const currentMode = this.mode();
+        const currentCategory = this.category();
+
+        void currentMode;
+        void currentCategory;
+
+        if (!open) {
+          return;
+        }
+
+        this.syncFormState();
+      },
+      { allowSignalWrites: true }
+    );
+  }
+
   syncFormState(): void {
     const currentMode = this.mode();
     const currentCategory = this.category();
@@ -83,6 +104,9 @@ export class CategoryFormModal {
         category_type: 'MAIN_DISH',
         description: '',
       });
+
+      this.form.markAsPristine();
+      this.form.markAsUntouched();
       return;
     }
 
@@ -91,6 +115,9 @@ export class CategoryFormModal {
       category_type: currentCategory?.category_type ?? 'MAIN_DISH',
       description: currentCategory?.description ?? '',
     });
+
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
   close(): void {
@@ -204,6 +231,10 @@ export class CategoryFormModal {
 
     if (httpError.status === 403) {
       return httpError.error?.message || 'No tienes permisos para realizar esta acción.';
+    }
+
+    if (httpError.status === 0) {
+      return 'No se pudo conectar con el servidor.';
     }
 
     return httpError.error?.message || defaultMessage;

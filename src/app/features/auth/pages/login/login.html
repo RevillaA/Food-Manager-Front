@@ -1,76 +1,253 @@
-<div class="login-page">
-  <div class="login-card">
-    <div class="login-card__header">
-      <h1>Iniciar sesión</h1>
-      <p>Ingresa tus credenciales para acceder al sistema.</p>
-    </div>
+<div
+  class="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#fffdf8_0%,#fff8eb_100%)]"
+>
+  <!-- elementos decorativos -->
+  <div
+    class="absolute -left-20 top-[-60px] h-72 w-72 rounded-full bg-[#E2552E]/10 blur-3xl"
+  ></div>
+  <div
+    class="absolute right-[-70px] top-1/3 h-80 w-80 rounded-full bg-[#F6E7A7]/45 blur-3xl"
+  ></div>
+  <div
+    class="absolute bottom-[-80px] left-1/3 h-72 w-72 rounded-full bg-[#E2552E]/8 blur-3xl"
+  ></div>
 
-    <form class="login-form" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="form-group">
-        <label for="username">Usuario</label>
-        <input
-          id="username"
-          type="text"
-          formControlName="username"
-          placeholder="Ingresa tu usuario"
-          autocomplete="username"
-          [class.input-error]="form.get('username')?.touched && form.get('username')?.invalid"
-        />
-
-        @if (hasFieldError('username', 'required')) {
-          <small class="field-error">El usuario es obligatorio.</small>
-        }
-
-        @if (hasFieldError('username', 'minlength')) {
-          <small class="field-error">El usuario debe tener al menos 3 caracteres.</small>
-        }
-
-        @if (hasFieldError('username', 'maxlength')) {
-          <small class="field-error">El usuario no puede superar los 50 caracteres.</small>
-        }
-      </div>
-
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          placeholder="Ingresa tu contraseña"
-          autocomplete="current-password"
-          [class.input-error]="form.get('password')?.touched && form.get('password')?.invalid"
-        />
-
-        @if (hasFieldError('password', 'required')) {
-          <small class="field-error">La contraseña es obligatoria.</small>
-        }
-
-        @if (hasFieldError('password', 'minlength')) {
-          <small class="field-error">La contraseña debe tener al menos 6 caracteres.</small>
-        }
-
-        @if (hasFieldError('password', 'maxlength')) {
-          <small class="field-error">La contraseña no puede superar los 100 caracteres.</small>
-        }
-      </div>
-
-      @if (errorMessage()) {
-        <div class="form-alert form-alert--error">
-          {{ errorMessage() }}
-        </div>
-      }
-
-      <button
-        type="submit"
-        class="submit-button"
-        [disabled]="isSubmitting()"
+  <div class="relative mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+    <div
+      class="grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/70 bg-white/90 shadow-[0_25px_80px_rgba(17,24,39,0.12)] backdrop-blur xl:grid-cols-2"
+    >
+      <!-- panel izquierdo / branding -->
+      <div
+        class="relative hidden xl:flex items-center justify-center overflow-hidden bg-[linear-gradient(145deg,#fff6dc_0%,#fffaf0_55%,#ffffff_100%)] p-10"
       >
-        @if (isSubmitting()) {
-          <span>Ingresando...</span>
-        } @else {
-          <span>Iniciar sesión</span>
-        }
-      </button>
-    </form>
+        <div
+          class="absolute right-0 top-0 h-52 w-52 translate-x-14 -translate-y-12 rounded-full bg-[#E2552E]/10 blur-3xl"
+        ></div>
+        <div
+          class="absolute bottom-0 left-0 h-48 w-48 -translate-x-10 translate-y-10 rounded-full bg-[#F6E7A7]/60 blur-3xl"
+        ></div>
+
+        <div class="relative z-10 flex w-full max-w-md flex-col items-center justify-center text-center">
+          <div
+            class="flex h-40 w-40 items-center justify-center rounded-[2rem] border-4 border-[#E2552E]/90 bg-white/80 p-5 shadow-[0_18px_45px_rgba(226,85,46,0.16)]"
+          >
+            <img src="assets/LOGO.png" alt="Logo Revis Food Control" class="h-55 w-55 object-contain"/>
+          </div>
+
+          <div class="mt-8 space-y-3">
+            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-[#E2552E]">
+              Acceso al sistema
+            </p>
+
+            <h2 class="text-4xl font-black leading-tight text-[#111111]">
+              Revis Food Control
+            </h2>
+
+            <p class="text-lg font-semibold text-gray-700">
+              Bienvenido
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- panel derecho / formulario -->
+      <div class="flex items-center justify-center px-5 py-8 sm:px-8 lg:px-10">
+        <div class="w-full max-w-md">
+          <!-- branding mobile/tablet -->
+          <div class="mb-8 flex items-center gap-4 xl:hidden">
+            <div
+              class="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-[#E2552E]/90 bg-white p-2 shadow-sm"
+            >
+              <img
+                src="assets/LOGO.png"
+                alt="Logo Revis Food Control"
+                class="h-10 w-10 object-contain"
+              />
+            </div>
+
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#E2552E]">
+                Acceso al sistema
+              </p>
+              <h2 class="text-xl font-bold text-[#111111]">Revis Food Control</h2>
+            </div>
+          </div>
+
+          <div class="mb-8">
+            <h1 class="text-3xl font-black tracking-tight text-[#111111]">
+              Iniciar sesión
+            </h1>
+            <p class="mt-2 text-sm leading-6 text-gray-500">
+              Ingresa tus credenciales para acceder al sistema.
+            </p>
+          </div>
+
+          <form class="space-y-5" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="space-y-2">
+              <label
+                for="username"
+                class="text-sm font-semibold text-[#111111]"
+              >
+                Usuario
+              </label>
+
+              <div class="relative">
+                <span
+                  class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0a3.75 3.75 0 0 1 7.5 0ZM4.5 19.125a7.5 7.5 0 0 1 15 0"
+                    />
+                  </svg>
+                </span>
+
+                <input
+                  id="username"
+                  type="text"
+                  formControlName="username"
+                  placeholder="Ingresa tu usuario"
+                  autocomplete="username"
+                  class="w-full rounded-2xl border bg-white px-4 py-3.5 pl-12 text-sm text-[#111111] outline-none transition placeholder:text-gray-400 focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
+                  [class.border-red-300]="form.get('username')?.touched && form.get('username')?.invalid"
+                  [class.ring-4]="form.get('username')?.touched && form.get('username')?.invalid"
+                  [class.ring-red-100]="form.get('username')?.touched && form.get('username')?.invalid"
+                  [class.border-gray-200]="!(form.get('username')?.touched && form.get('username')?.invalid)"
+                />
+              </div>
+
+              @if (hasFieldError('username', 'required')) {
+                <small class="block text-sm text-red-600">
+                  El usuario es obligatorio.
+                </small>
+              }
+
+              @if (hasFieldError('username', 'minlength')) {
+                <small class="block text-sm text-red-600">
+                  El usuario debe tener al menos 3 caracteres.
+                </small>
+              }
+
+              @if (hasFieldError('username', 'maxlength')) {
+                <small class="block text-sm text-red-600">
+                  El usuario no puede superar los 50 caracteres.
+                </small>
+              }
+            </div>
+
+            <div class="space-y-2">
+              <label
+                for="password"
+                class="text-sm font-semibold text-[#111111]"
+              >
+                Contraseña
+              </label>
+
+              <div class="relative">
+                <span
+                  class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M16.5 10.5V7.875a4.5 4.5 0 1 0-9 0V10.5m-.75 0h10.5a1.5 1.5 0 0 1 1.5 1.5v6a1.5 1.5 0 0 1-1.5 1.5H6.75a1.5 1.5 0 0 1-1.5-1.5v-6a1.5 1.5 0 0 1 1.5-1.5Z"
+                    />
+                  </svg>
+                </span>
+
+                <input
+                  id="password"
+                  type="password"
+                  formControlName="password"
+                  placeholder="Ingresa tu contraseña"
+                  autocomplete="current-password"
+                  class="w-full rounded-2xl border bg-white px-4 py-3.5 pl-12 text-sm text-[#111111] outline-none transition placeholder:text-gray-400 focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
+                  [class.border-red-300]="form.get('password')?.touched && form.get('password')?.invalid"
+                  [class.ring-4]="form.get('password')?.touched && form.get('password')?.invalid"
+                  [class.ring-red-100]="form.get('password')?.touched && form.get('password')?.invalid"
+                  [class.border-gray-200]="!(form.get('password')?.touched && form.get('password')?.invalid)"
+                />
+              </div>
+
+              @if (hasFieldError('password', 'required')) {
+                <small class="block text-sm text-red-600">
+                  La contraseña es obligatoria.
+                </small>
+              }
+
+              @if (hasFieldError('password', 'minlength')) {
+                <small class="block text-sm text-red-600">
+                  La contraseña debe tener al menos 6 caracteres.
+                </small>
+              }
+
+              @if (hasFieldError('password', 'maxlength')) {
+                <small class="block text-sm text-red-600">
+                  La contraseña no puede superar los 100 caracteres.
+                </small>
+              }
+            </div>
+
+            @if (errorMessage()) {
+              <div
+                class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm"
+              >
+                <div class="mt-0.5 text-red-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.5 18h17a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"/>
+                  </svg>
+                </div>
+
+                <div class="flex-1 leading-5">
+                  {{ errorMessage() }}
+                </div>
+              </div>
+            }
+
+            <button
+              type="submit"
+              class="inline-flex w-full items-center justify-center rounded-2xl bg-[#E2552E] px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#E2552E]/20 transition hover:bg-[#C94724] hover:shadow-xl hover:shadow-[#E2552E]/25 disabled:cursor-not-allowed disabled:opacity-70"
+              [disabled]="isSubmitting()"
+            >
+              @if (isSubmitting()) {
+                <span class="flex items-center gap-2">
+                  <span
+                    class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  ></span>
+                  Ingresando...
+                </span>
+              } @else {
+                <span>Iniciar sesión</span>
+              }
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

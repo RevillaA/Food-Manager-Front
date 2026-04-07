@@ -146,4 +146,12 @@ export class CategoryList implements OnInit {
         return type;
     }
   }
+
+  getCategoryInitial(name?: string | null): string {
+    if (!name) {
+      return 'C';
+    }
+
+    return name.trim().charAt(0).toUpperCase();
+  }
 }

@@ -75,16 +75,26 @@ export class ProductFormModal {
     ]),
   });
 
-  private readonly formSyncEffect = effect(() => {
-    const open = this.isOpen();
-    const mode = this.mode();
-    const product = this.product();
+  constructor() {
+    effect(
+      () => {
+        const open = this.isOpen();
+        const currentMode = this.mode();
+        const currentProduct = this.product();
 
-    if (open) {
-      this.loadActiveCategories();
-      this.syncFormState(mode, product);
-    }
-  });
+        void currentMode;
+        void currentProduct;
+
+        if (!open) {
+          return;
+        }
+
+        this.loadActiveCategories();
+        this.syncFormState();
+      },
+      { allowSignalWrites: true }
+    );
+  }
 
   close(): void {
     if (this.isSubmitting()) {
@@ -179,7 +189,10 @@ export class ProductFormModal {
     }
   }
 
-  private syncFormState(mode: ProductFormMode, product: Product | null): void {
+  private syncFormState(): void {
+    const mode = this.mode();
+    const product = this.product();
+
     this.errorMessage.set(null);
 
     if (mode === 'create') {
@@ -189,6 +202,9 @@ export class ProductFormModal {
         description: '',
         base_price: null,
       });
+
+      this.form.markAsPristine();
+      this.form.markAsUntouched();
       return;
     }
 
@@ -198,6 +214,9 @@ export class ProductFormModal {
       description: product?.description ?? '',
       base_price: product?.base_price ?? null,
     });
+
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
   private loadActiveCategories(): void {
@@ -238,6 +257,10 @@ export class ProductFormModal {
 
     if (error.status === 403) {
       return error.error?.message || 'No tienes permisos para realizar esta acción.';
+    }
+
+    if (error.status === 0) {
+      return 'No se pudo conectar con el servidor.';
     }
 
     return error.error?.message || 'No se pudo guardar el producto.';

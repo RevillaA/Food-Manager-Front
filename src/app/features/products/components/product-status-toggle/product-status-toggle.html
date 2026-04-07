@@ -1,10 +1,25 @@
 <button
   type="button"
-  class="status-toggle"
-  [class.status-toggle--active]="isActive()"
-  [class.status-toggle--inactive]="!isActive()"
+  class="inline-flex min-w-[96px] items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition"
+  [class.bg-green-100]="isActive()"
+  [class.text-green-700]="isActive()"
+  [class.hover:bg-green-200]="isActive() && !disabled()"
+  [class.bg-gray-100]="!isActive()"
+  [class.text-gray-600]="!isActive()"
+  [class.hover:bg-gray-200]="!isActive() && !disabled()"
+  [class.cursor-not-allowed]="disabled()"
+  [class.opacity-60]="disabled()"
   [disabled]="disabled()"
   (click)="handleClick()"
 >
-  {{ isActive() ? 'Activo' : 'Inactivo' }}
+  @if (disabled()) {
+    <span class="flex items-center gap-2">
+      <span
+        class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current/30 border-t-current"
+      ></span>
+      Procesando...
+    </span>
+  } @else {
+    {{ isActive() ? 'Activo' : 'Inactivo' }}
+  }
 </button>

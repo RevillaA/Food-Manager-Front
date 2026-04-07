@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Output,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -69,12 +70,36 @@ export class UserFormModal {
       Validators.minLength(3),
       Validators.maxLength(50),
     ]),
-    email: this.fb.control<string | null>('', [Validators.email, Validators.maxLength(120)]),
+    email: this.fb.control<string | null>('', [
+      Validators.email,
+      Validators.maxLength(120),
+    ]),
     password: this.fb.control<string>('', []),
     role_name: this.fb.nonNullable.control<'ADMIN' | 'CASHIER'>('CASHIER', [
       Validators.required,
     ]),
   });
+
+  constructor() {
+    effect(
+      () => {
+        const open = this.isOpen();
+        const currentMode = this.mode();
+        const currentUser = this.user();
+
+        // Se leen explícitamente para que el effect reaccione a esos cambios
+        void currentMode;
+        void currentUser;
+
+        if (!open) {
+          return;
+        }
+
+        this.syncFormState();
+      },
+      { allowSignalWrites: true }
+    );
+  }
 
   syncFormState(): void {
     const currentMode = this.mode();
@@ -97,6 +122,9 @@ export class UserFormModal {
         Validators.maxLength(100),
       ]);
       this.form.controls.password.updateValueAndValidity({ emitEvent: false });
+
+      this.form.markAsPristine();
+      this.form.markAsUntouched();
       return;
     }
 
@@ -110,6 +138,9 @@ export class UserFormModal {
 
     this.form.controls.password.clearValidators();
     this.form.controls.password.updateValueAndValidity({ emitEvent: false });
+
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
   }
 
   close(): void {
@@ -226,6 +257,10 @@ export class UserFormModal {
 
     if (httpError.status === 403) {
       return httpError.error?.message || 'No tienes permisos para realizar esta acción.';
+    }
+
+    if (httpError.status === 0) {
+      return 'No se pudo conectar con el servidor.';
     }
 
     return httpError.error?.message || defaultMessage;

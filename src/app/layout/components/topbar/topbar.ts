@@ -25,4 +25,15 @@ export class Topbar {
     this.authService.logout();
     this.router.navigateByUrl('/login');
   }
+
+  getRoleLabel(role?: string | null): string {
+    if (!role) return '';
+
+    const rolesMap: Record<string, string> = {
+      ADMIN: 'Administrador',
+      CASHIER: 'Cajero',
+    };
+
+    return rolesMap[role] ?? role;
+  }
 }

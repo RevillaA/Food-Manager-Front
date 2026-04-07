@@ -12,4 +12,13 @@ export class MyAccount {
   private readonly sessionService = inject(SessionService);
 
   readonly user = computed(() => this.sessionService.currentUser());
+
+  getRoleLabel(role?: string | null): string {
+    const rolesMap: Record<string, string> = {
+      ADMIN: 'Administrador',
+      CASHIER: 'Cajero',
+    };
+
+    return role ? rolesMap[role] ?? role : '';
+  }
 }

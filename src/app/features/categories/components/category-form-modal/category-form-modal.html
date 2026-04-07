@@ -1,66 +1,143 @@
 @if (isOpen()) {
-  <div class="modal-backdrop" (click)="close()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <div class="modal__header">
-        <div>
-          <h3>{{ modalTitle() }}</h3>
-          <p>Completa la información de la categoría.</p>
-        </div>
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm"
+    (click)="close()"
+  >
+    <div
+      class="w-full max-w-2xl overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-[0_25px_80px_rgba(17,24,39,0.18)]"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="border-b border-[#f1ebe3] bg-[#fffaf4] px-6 py-5">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-black text-[#111111]">
+              {{ modalTitle() }}
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Completa la información de la categoría.
+            </p>
+          </div>
 
-        <button type="button" class="modal__close" (click)="close()">×</button>
+          <button
+            type="button"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white text-lg font-semibold text-[#111111] transition hover:bg-[#fff4ea]"
+            (click)="close()"
+            aria-label="Cerrar modal"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
-      <form class="modal__form" [formGroup]="form" (ngSubmit)="submit()">
-        <div class="form-grid">
-          <div class="form-field form-field--full">
-            <label for="name">Nombre</label>
-            <input id="name" type="text" formControlName="name" />
+      <form class="space-y-5 px-6 py-6" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="grid gap-5">
+          <div class="space-y-2">
+            <label for="name" class="text-sm font-semibold text-[#111111]">
+              Nombre
+            </label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#111111] outline-none transition placeholder:text-gray-400 focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
+              placeholder="Ingresa el nombre de la categoría"
+            />
 
             @if (hasFieldError('name', 'required')) {
-              <small class="field-error">El nombre es obligatorio.</small>
+              <small class="block text-sm text-red-600">
+                El nombre es obligatorio.
+              </small>
             }
             @if (hasFieldError('name', 'minlength')) {
-              <small class="field-error">Debe tener al menos 2 caracteres.</small>
+              <small class="block text-sm text-red-600">
+                Debe tener al menos 2 caracteres.
+              </small>
             }
           </div>
 
-          <div class="form-field form-field--full">
-            <label for="category_type">Tipo de categoría</label>
-            <select id="category_type" formControlName="category_type">
+          <div class="space-y-2">
+            <label for="category_type" class="text-sm font-semibold text-[#111111]">
+              Tipo de categoría
+            </label>
+            <select
+              id="category_type"
+              formControlName="category_type"
+              class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#111111] outline-none transition focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
+            >
               @for (type of categoryTypes; track type.value) {
                 <option [value]="type.value">{{ type.label }}</option>
               }
             </select>
           </div>
 
-          <div class="form-field form-field--full">
-            <label for="description">Descripción</label>
+          <div class="space-y-2">
+            <label for="description" class="text-sm font-semibold text-[#111111]">
+              Descripción
+            </label>
             <textarea
               id="description"
               rows="4"
               formControlName="description"
+              class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#111111] outline-none transition placeholder:text-gray-400 focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
+              placeholder="Describe la categoría"
             ></textarea>
 
             @if (hasFieldError('description', 'maxlength')) {
-              <small class="field-error">La descripción no puede superar 200 caracteres.</small>
+              <small class="block text-sm text-red-600">
+                La descripción no puede superar 200 caracteres.
+              </small>
             }
           </div>
         </div>
 
         @if (errorMessage()) {
-          <div class="form-alert">
-            {{ errorMessage() }}
+          <div
+            class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm"
+          >
+            <div class="mt-0.5 text-red-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.5 18h17a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"
+                />
+              </svg>
+            </div>
+
+            <div class="flex-1 leading-5">
+              {{ errorMessage() }}
+            </div>
           </div>
         }
 
-        <div class="modal__actions">
-          <button type="button" class="button button--secondary" (click)="close()">
+        <div class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#111111] transition hover:bg-gray-50"
+            (click)="close()"
+          >
             Cancelar
           </button>
 
-          <button type="submit" class="button button--primary" [disabled]="isSubmitting()">
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center rounded-2xl bg-[#E2552E] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#E2552E]/20 transition hover:bg-[#C94724] disabled:cursor-not-allowed disabled:opacity-70"
+            [disabled]="isSubmitting()"
+          >
             @if (isSubmitting()) {
-              Guardando...
+              <span class="flex items-center gap-2">
+                <span
+                  class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                ></span>
+                Guardando...
+              </span>
             } @else {
               {{ submitLabel() }}
             }

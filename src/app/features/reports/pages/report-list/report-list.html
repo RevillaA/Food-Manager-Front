@@ -1,11 +1,284 @@
 <section class="page">
   <div class="page__header">
-    <h2>Reportes</h2>
-    <p>Módulo administrativo para consulta de indicadores y resúmenes.</p>
+    <div>
+      <h2>Reportes</h2>
+      <p>Métricas clave del negocio y comportamiento de ventas.</p>
+    </div>
+
+    <button type="button" class="primary-button" (click)="refreshAll()">
+      Actualizar
+    </button>
   </div>
 
-  <article class="placeholder-card">
-    <h3>Indicadores</h3>
-    <p>Aquí irán reportes de ventas, top productos y consultas por rango.</p>
+  @if (errorMessage()) {
+    <div class="alert alert--error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <article class="filters-card">
+    <div class="filters filters--daily">
+      <div class="filters__field">
+        <label for="dailyDate">Reporte diario</label>
+        <input
+          id="dailyDate"
+          type="date"
+          [value]="dailyDateFilter()"
+          (change)="onDailyDateChange($event)"
+        />
+      </div>
+
+      <div class="filters__actions">
+        <button type="button" class="secondary-button" (click)="applyDailyFilter()">
+          Cargar día
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <h3>Total vendido del día</h3>
+      @if (isLoadingDaily()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ dailyReport()?.total_sales_amount || 0 | number:'1.2-2' }}</strong>
+      }
+    </article>
+
+    <article class="summary-card">
+      <h3>Cantidad de ventas</h3>
+      @if (isLoadingDaily()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ dailyReport()?.total_sales_count || 0 }}</strong>
+      }
+    </article>
+
+    <article class="summary-card">
+      <h3>Ticket promedio</h3>
+      @if (isLoadingDaily()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ averageTicket() | number:'1.2-2' }}</strong>
+      }
+    </article>
+
+    <article class="summary-card">
+      <h3>Bebidas vendidas ($)</h3>
+      @if (isLoadingDaily()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ dailyReport()?.totals_by_category?.DRINK || 0 | number:'1.2-2' }}</strong>
+      }
+    </article>
+  </div>
+
+  <div class="summary-grid">
+    <article class="summary-card">
+      <h3>Platos vendidos ($)</h3>
+      @if (isLoadingDaily()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ dailyReport()?.totals_by_category?.MAIN_DISH || 0 | number:'1.2-2' }}</strong>
+      }
+    </article>
+
+    <article class="summary-card">
+      <h3>Extras vendidos ($)</h3>
+      @if (isLoadingDaily()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ dailyReport()?.totals_by_category?.EXTRA || 0 | number:'1.2-2' }}</strong>
+      }
+    </article>
+
+    <article class="summary-card summary-card--wide">
+      <h3>Fecha del reporte diario</h3>
+      @if (isLoadingDaily()) {
+        <p>Cargando...</p>
+      } @else {
+        <strong>{{ dailyReport()?.date || '—' }}</strong>
+      }
+    </article>
+  </div>
+
+  <article class="filters-card">
+    <div class="filters">
+      <div class="filters__field">
+        <label for="rangeDateFrom">Desde</label>
+        <input
+          id="rangeDateFrom"
+          type="date"
+          [value]="rangeDateFromFilter()"
+          (change)="onRangeDateFromChange($event)"
+        />
+      </div>
+
+      <div class="filters__field">
+        <label for="rangeDateTo">Hasta</label>
+        <input
+          id="rangeDateTo"
+          type="date"
+          [value]="rangeDateToFilter()"
+          (change)="onRangeDateToChange($event)"
+        />
+      </div>
+
+      <div class="filters__actions">
+        <button type="button" class="secondary-button" (click)="applyRangeFilters()">
+          Aplicar rango
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <div class="content-grid">
+    <article class="card">
+      <div class="card__header">
+        <h3>Ventas por rango</h3>
+      </div>
+
+      @if (isLoadingRange()) {
+        <div class="state-box">Cargando reporte por rango...</div>
+      } @else if (!rangeReport()) {
+        <div class="state-box">No hay datos para el rango seleccionado.</div>
+      } @else {
+        <div class="range-summary">
+          <div><strong>Desde:</strong> {{ rangeReport()?.summary?.date_from }}</div>
+          <div><strong>Hasta:</strong> {{ rangeReport()?.summary?.date_to }}</div>
+          <div><strong>Total vendido:</strong> {{ rangeReport()?.summary?.total_sales_amount | number:'1.2-2' }}</div>
+          <div><strong>Total ventas:</strong> {{ rangeReport()?.summary?.total_sales_count }}</div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th># Venta</th>
+                <th>Pago</th>
+                <th>Método</th>
+                <th>Total</th>
+                <th>Usuario</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (sale of rangeReport()?.sales || []; track sale.id) {
+                <tr>
+                  <td>#{{ sale.sale_number }}</td>
+                  <td>
+                    <span [class]="getPaymentStatusBadgeClass(sale.payment_status)">
+                      {{ sale.payment_status }}
+                    </span>
+                  </td>
+                  <td>{{ getPaymentMethodLabel(sale.payment_method) }}</td>
+                  <td>{{ sale.total | number:'1.2-2' }}</td>
+                  <td>{{ sale.created_by_user.full_name }}</td>
+                  <td>{{ sale.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <div class="pagination__summary">
+            Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+          </div>
+
+          <div class="pagination__actions">
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="page() <= 1"
+              (click)="goToPreviousPage()"
+            >
+              Anterior
+            </button>
+
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="page() >= totalPages()"
+              (click)="goToNextPage()"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      }
+    </article>
+
+    <article class="card">
+      <div class="card__header">
+        <h3>Top productos</h3>
+      </div>
+
+      @if (isLoadingTopProducts()) {
+        <div class="state-box">Cargando top de productos...</div>
+      } @else if (topProducts().length === 0) {
+        <div class="state-box">No hay productos vendidos en ese rango.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (product of topProducts(); track product.product_name + product.product_category_name) {
+                <tr>
+                  <td>{{ product.product_name }}</td>
+                  <td>{{ product.product_category_name }}</td>
+                  <td>{{ product.total_quantity_sold }}</td>
+                  <td>{{ product.total_amount | number:'1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  </div>
+
+  <article class="card">
+    <div class="card__header">
+      <h3>Resumen por categorías</h3>
+    </div>
+
+    @if (isLoadingCategories()) {
+      <div class="state-box">Cargando categorías...</div>
+    } @else if (!(categorySummary()?.categories?.length)) {
+      <div class="state-box">No hay datos por categorías en ese rango.</div>
+    } @else {
+      <div class="table-wrapper">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th>Categoría</th>
+              <th>Cantidad total</th>
+              <th>Total vendido</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (category of categorySummary()?.categories || []; track category.category_name) {
+              <tr>
+                <td>{{ category.category_name }}</td>
+                <td>{{ category.total_quantity }}</td>
+                <td>{{ category.total_amount | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   </article>
 </section>

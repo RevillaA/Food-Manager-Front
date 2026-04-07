@@ -206,4 +206,12 @@ export class ProductList implements OnInit {
         return type;
     }
   }
+
+  getProductInitial(name?: string | null): string {
+    if (!name) {
+      return 'P';
+    }
+
+    return name.trim().charAt(0).toUpperCase();
+  }
 }
