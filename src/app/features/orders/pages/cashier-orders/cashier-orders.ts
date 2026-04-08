@@ -27,13 +27,13 @@ import { ProductsService } from '../../../products/services/products';
 
 import { SalesService } from '../../../sales/services/sales';
 import { CreateSaleRequest } from '../../../sales/models/create-sale-request.interface';
-import { Sale } from '../../../sales/models/sale.interface';
 import { QuickPaymentModal } from '../../../sales/components/quick-payment-modal/quick-payment-modal';
+import { OrderDetailModal } from '../../components/order-detail-modal/order-detail-modal';
 
 @Component({
   selector: 'app-cashier-orders',
   standalone: true,
-  imports: [CommonModule, DatePipe, DecimalPipe, QuickPaymentModal],
+  imports: [CommonModule, DatePipe, DecimalPipe, QuickPaymentModal, OrderDetailModal],
   templateUrl: './cashier-orders.html',
   styleUrl: './cashier-orders.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,8 +50,8 @@ export class CashierOrders implements OnInit {
   readonly isLoadingOrderDetail = signal(false);
   readonly isLoadingCategories = signal(false);
   readonly isLoadingProducts = signal(false);
-  readonly isLoadingSales = signal(false);
 
+  readonly isOpeningSession = signal(false);
   readonly isCreatingOrder = signal(false);
   readonly isAddingProduct = signal(false);
   readonly isUpdatingItem = signal(false);
@@ -60,36 +60,20 @@ export class CashierOrders implements OnInit {
   readonly isCreatingSale = signal(false);
 
   readonly errorMessage = signal<string | null>(null);
+  readonly modalErrorMessage = signal<string | null>(null);
   readonly paymentErrorMessage = signal<string | null>(null);
 
   readonly activeSession = signal<DailySession | null>(null);
-  readonly openOrders = signal<Order[]>([]);
-  readonly closedOrdersPendingPayment = signal<Order[]>([]);
-  readonly paidSales = signal<Sale[]>([]);
+  readonly boardOrders = signal<Order[]>([]);
   readonly selectedOrder = signal<OrderDetail | null>(null);
 
   readonly categories = signal<Category[]>([]);
   readonly products = signal<Product[]>([]);
+
   readonly selectedCategoryId = signal('');
-
   readonly isPaymentModalOpen = signal(false);
-
-  readonly paidOrderIds = computed(() => {
-    return new Set(this.paidSales().map((sale) => sale.order_id));
-  });
-
-  readonly hasActiveSession = computed(() => !!this.activeSession());
-  readonly hasSelectedOrder = computed(() => !!this.selectedOrder());
-  readonly selectedOrderItems = computed(() => this.selectedOrder()?.items ?? []);
-
-  readonly isSelectedOrderPaid = computed(() => {
-    const order = this.selectedOrder();
-    if (!order) {
-      return false;
-    }
-
-    return this.paidOrderIds().has(order.id);
-  });
+  readonly isDetailModalOpen = signal(false);
+  readonly isPaidOrdersCollapsed = signal(true);
 
   readonly canOperateOrder = computed(() => {
     const order = this.selectedOrder();
@@ -99,15 +83,17 @@ export class CashierOrders implements OnInit {
   readonly canChargeOrder = computed(() => {
     const order = this.selectedOrder();
 
-    return (
-      !!order &&
+    const isPaidInBoard = !!order && this.paidOrders().some((item) => item.id === order.id);
+
+    return !!order &&
       order.status === 'CLOSED' &&
-      !this.paidOrderIds().has(order.id)
-    );
+      order.payment_state !== 'PAID' &&
+      !isPaidInBoard;
   });
 
   readonly isBusy = computed(() => {
     return (
+      this.isOpeningSession() ||
       this.isCreatingOrder() ||
       this.isAddingProduct() ||
       this.isUpdatingItem() ||
@@ -117,7 +103,7 @@ export class CashierOrders implements OnInit {
     );
   });
 
-  readonly groupedProducts = computed(() => {
+  readonly filteredCatalogProducts = computed(() => {
     const categoryId = this.selectedCategoryId();
 
     if (!categoryId) {
@@ -127,13 +113,54 @@ export class CashierOrders implements OnInit {
     return this.products().filter((product) => product.category.id === categoryId);
   });
 
+  readonly preparationOrders = computed(() => {
+    return [...this.boardOrders()]
+      .filter((order) => order.status === 'OPEN')
+      .filter((order) => order.preparation_status !== 'SERVED')
+      .sort((a, b) => this.compareOrders(a, b));
+  });
+
+  readonly servedOrders = computed(() => {
+    return [...this.boardOrders()]
+      .filter((order) => order.status === 'OPEN')
+      .filter((order) => order.preparation_status === 'SERVED')
+      .sort((a, b) => this.compareOrders(a, b));
+  });
+
+  readonly closedOrders = computed(() => {
+    return [...this.boardOrders()]
+      .filter((order) => order.status === 'CLOSED')
+      .filter((order) => order.payment_state !== 'PAID')
+      .sort((a, b) => this.compareOrders(a, b));
+  });
+
+  readonly paidOrders = computed(() => {
+    return [...this.boardOrders()]
+      .filter((order) => order.status === 'CLOSED')
+      .filter((order) => order.payment_state === 'PAID')
+      .sort((a, b) => this.compareOrders(a, b));
+  });
+
+  readonly totalVisibleOrders = computed(() => {
+    return (
+      this.preparationOrders().length +
+      this.servedOrders().length +
+      this.closedOrders().length +
+      this.paidOrders().length
+    );
+  });
+
+  readonly hasVisibleOrders = computed(() => {
+    return this.totalVisibleOrders() > 0;
+  });
+
   ngOnInit(): void {
     this.loadCategories();
     this.loadProducts();
     this.loadActiveSessionAndOrders();
   }
 
-  loadActiveSessionAndOrders(selectedOrderId?: string): void {
+  loadActiveSessionAndOrders(): void {
     this.isLoadingSession.set(true);
     this.errorMessage.set(null);
 
@@ -141,17 +168,16 @@ export class CashierOrders implements OnInit {
       next: (response) => {
         this.activeSession.set(response.data);
         this.isLoadingSession.set(false);
-        this.loadOrdersAndSales(selectedOrderId);
+        this.loadBoardOrders();
       },
       error: (error: HttpErrorResponse) => {
         this.isLoadingSession.set(false);
 
         if (error.status === 404) {
           this.activeSession.set(null);
-          this.openOrders.set([]);
-          this.closedOrdersPendingPayment.set([]);
-          this.paidSales.set([]);
+          this.boardOrders.set([]);
           this.selectedOrder.set(null);
+          this.isDetailModalOpen.set(false);
           return;
         }
 
@@ -162,8 +188,51 @@ export class CashierOrders implements OnInit {
     });
   }
 
+  loadBoardOrders(preserveSelectionId?: string): void {
+    const session = this.activeSession();
+
+    if (!session) {
+      this.boardOrders.set([]);
+      this.selectedOrder.set(null);
+      return;
+    }
+
+    this.isLoadingOrders.set(true);
+    this.errorMessage.set(null);
+
+    this.ordersService
+      .getOrdersBoard(1, 100, {
+        daily_session_id: session.id,
+      })
+      .subscribe({
+        next: (response: OrdersListResponse) => {
+          const sessionOrders = response.data
+            .filter((order) => order.daily_session_id === session.id)
+            .filter((order) => order.status === 'OPEN' || order.status === 'CLOSED')
+            .sort((a, b) => this.compareOrders(a, b));
+
+          this.boardOrders.set(sessionOrders);
+          this.isLoadingOrders.set(false);
+
+          if (preserveSelectionId) {
+            const exists = sessionOrders.some((order) => order.id === preserveSelectionId);
+            if (exists) {
+              this.loadSelectedOrder(preserveSelectionId);
+            }
+          }
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isLoadingOrders.set(false);
+          this.errorMessage.set(
+            error.error?.message || 'No se pudieron cargar los pedidos de la jornada activa.'
+          );
+        },
+      });
+  }
+
   loadCategories(): void {
     this.isLoadingCategories.set(true);
+    this.errorMessage.set(null);
 
     this.categoriesService.getCategories(1, 100, { is_active: true }).subscribe({
       next: (response) => {
@@ -181,11 +250,11 @@ export class CashierOrders implements OnInit {
 
   loadProducts(): void {
     this.isLoadingProducts.set(true);
+    this.errorMessage.set(null);
 
     this.productsService
       .getProducts(1, 100, {
         is_active: true,
-        category_id: this.selectedCategoryId() || undefined,
       })
       .subscribe({
         next: (response: ProductsListResponse) => {
@@ -205,134 +274,17 @@ export class CashierOrders implements OnInit {
       });
   }
 
-  loadOrdersAndSales(selectedOrderId?: string): void {
-    const session = this.activeSession();
-
-    if (!session) {
-      this.openOrders.set([]);
-      this.closedOrdersPendingPayment.set([]);
-      this.paidSales.set([]);
-      this.selectedOrder.set(null);
-      return;
-    }
-
-    this.isLoadingOrders.set(true);
-    this.isLoadingSales.set(true);
-
-    this.ordersService
-      .getOrders(1, 100, {
-        daily_session_id: session.id,
-      })
-      .subscribe({
-        next: (ordersResponse: OrdersListResponse) => {
-          this.salesService
-            .getSales(1, 100, {
-              daily_session_id: session.id,
-            })
-            .subscribe({
-              next: (salesResponse) => {
-                const sortedOrders = [...ordersResponse.data].sort((a, b) => {
-                  if (a.order_number !== b.order_number) {
-                    return a.order_number - b.order_number;
-                  }
-
-                  return (
-                    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                  );
-                });
-
-                const paidOrderIds = new Set(
-                  salesResponse.data.map((sale) => sale.order_id)
-                );
-
-                this.paidSales.set(salesResponse.data);
-                this.openOrders.set(
-                  sortedOrders.filter((order) => order.status === 'OPEN')
-                );
-                this.closedOrdersPendingPayment.set(
-                  sortedOrders.filter(
-                    (order) =>
-                      order.status === 'CLOSED' && !paidOrderIds.has(order.id)
-                  )
-                );
-
-                this.isLoadingOrders.set(false);
-                this.isLoadingSales.set(false);
-
-                const preferredOrderId = selectedOrderId || this.selectedOrder()?.id;
-
-                if (preferredOrderId) {
-                  const existsOpen = this.openOrders().some(
-                    (order) => order.id === preferredOrderId
-                  );
-                  const existsClosedPending = this.closedOrdersPendingPayment().some(
-                    (order) => order.id === preferredOrderId
-                  );
-
-                  if (existsOpen || existsClosedPending) {
-                    this.selectOrder(preferredOrderId);
-                    return;
-                  }
-                }
-
-                if (this.openOrders().length > 0) {
-                  this.selectOrder(this.openOrders()[0].id);
-                  return;
-                }
-
-                if (this.closedOrdersPendingPayment().length > 0) {
-                  this.selectOrder(this.closedOrdersPendingPayment()[0].id);
-                  return;
-                }
-
-                this.selectedOrder.set(null);
-              },
-              error: (error: HttpErrorResponse) => {
-                this.isLoadingOrders.set(false);
-                this.isLoadingSales.set(false);
-                this.errorMessage.set(
-                  error.error?.message || 'No se pudieron cargar las ventas de la jornada.'
-                );
-              },
-            });
-        },
-        error: (error: HttpErrorResponse) => {
-          this.isLoadingOrders.set(false);
-          this.isLoadingSales.set(false);
-          this.errorMessage.set(
-            error.error?.message || 'No se pudieron cargar los pedidos de la jornada.'
-          );
-        },
-      });
-  }
-
-  selectOrder(orderId: string): void {
-    this.isLoadingOrderDetail.set(true);
-
-    this.ordersService.getOrderById(orderId).subscribe({
-      next: (response) => {
-        this.selectedOrder.set(response.data);
-        this.isLoadingOrderDetail.set(false);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isLoadingOrderDetail.set(false);
-        this.errorMessage.set(
-          error.error?.message || 'No se pudo cargar el detalle del pedido.'
-        );
-      },
-    });
-  }
-
   openTodaySession(): void {
-    this.isCreatingOrder.set(true);
+    this.isOpeningSession.set(true);
+    this.errorMessage.set(null);
 
     this.dailySessionsService.openDailySession({}).subscribe({
       next: () => {
-        this.isCreatingOrder.set(false);
+        this.isOpeningSession.set(false);
         this.loadActiveSessionAndOrders();
       },
       error: (error: HttpErrorResponse) => {
-        this.isCreatingOrder.set(false);
+        this.isOpeningSession.set(false);
         this.errorMessage.set(
           error.error?.message || 'No se pudo abrir la jornada del día.'
         );
@@ -342,11 +294,13 @@ export class CashierOrders implements OnInit {
 
   createNewOrder(): void {
     this.isCreatingOrder.set(true);
+    this.errorMessage.set(null);
 
     this.ordersService.createOrder({}).subscribe({
       next: (response) => {
         this.isCreatingOrder.set(false);
-        this.loadActiveSessionAndOrders(response.data.id);
+        this.loadBoardOrders(response.data.id);
+        this.openOrderDetail(response.data.id);
       },
       error: (error: HttpErrorResponse) => {
         this.isCreatingOrder.set(false);
@@ -357,85 +311,69 @@ export class CashierOrders implements OnInit {
     });
   }
 
-  onCategoryFilterChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    this.selectedCategoryId.set(target.value);
-    this.loadProducts();
+  openOrderDetail(orderId: string): void {
+    this.isDetailModalOpen.set(true);
+    this.modalErrorMessage.set(null);
+    this.loadSelectedOrder(orderId);
   }
 
-  clearCategoryFilter(): void {
+  closeOrderDetail(): void {
+    this.isDetailModalOpen.set(false);
+    this.selectedOrder.set(null);
     this.selectedCategoryId.set('');
-    this.loadProducts();
+    this.modalErrorMessage.set(null);
+  }
+
+  loadSelectedOrder(orderId: string): void {
+    this.isLoadingOrderDetail.set(true);
+    this.modalErrorMessage.set(null);
+
+    this.ordersService.getOrderById(orderId).subscribe({
+      next: (response) => {
+        this.selectedOrder.set(response.data);
+        this.isLoadingOrderDetail.set(false);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoadingOrderDetail.set(false);
+        this.modalErrorMessage.set(
+          error.error?.message || 'No se pudo cargar el detalle del pedido.'
+        );
+      },
+    });
+  }
+
+  setCatalogCategoryFilter(categoryId: string): void {
+    this.selectedCategoryId.set(categoryId);
+  }
+
+  clearCatalogCategoryFilter(): void {
+    this.selectedCategoryId.set('');
   }
 
   addProductToOrder(product: Product): void {
-    if (!this.hasActiveSession()) {
-      this.errorMessage.set(
-        'No existe una jornada activa. Primero debes abrir la jornada del día.'
-      );
-      return;
-    }
-
     const currentOrder = this.selectedOrder();
 
     if (!currentOrder || currentOrder.status !== 'OPEN') {
-      this.createOrderAndAddProduct(product);
+      this.modalErrorMessage.set('Solo puedes agregar productos a pedidos abiertos.');
       return;
     }
 
-    this.addProductToExistingOrder(currentOrder.id, product);
-  }
-
-  private createOrderAndAddProduct(product: Product): void {
     this.isAddingProduct.set(true);
-
-    this.ordersService.createOrder({}).subscribe({
-      next: (response) => {
-        const orderId = response.data.id;
-
-        this.ordersService
-          .addOrderItem(orderId, {
-            product_id: product.id,
-            quantity: 1,
-          })
-          .subscribe({
-            next: () => {
-              this.isAddingProduct.set(false);
-              this.loadActiveSessionAndOrders(orderId);
-            },
-            error: (error: HttpErrorResponse) => {
-              this.isAddingProduct.set(false);
-              this.errorMessage.set(
-                error.error?.message || 'No se pudo agregar el producto al nuevo pedido.'
-              );
-            },
-          });
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isAddingProduct.set(false);
-        this.errorMessage.set(
-          error.error?.message || 'No se pudo crear el pedido.'
-        );
-      },
-    });
-  }
-
-  private addProductToExistingOrder(orderId: string, product: Product): void {
-    this.isAddingProduct.set(true);
+    this.modalErrorMessage.set(null);
 
     this.ordersService
-      .addOrderItem(orderId, {
+      .addOrderItem(currentOrder.id, {
         product_id: product.id,
         quantity: 1,
       })
       .subscribe({
         next: () => {
           this.isAddingProduct.set(false);
-          this.loadActiveSessionAndOrders(orderId);
+          this.refreshSelectedOrder(currentOrder.id);
         },
         error: (error: HttpErrorResponse) => {
           this.isAddingProduct.set(false);
-          this.errorMessage.set(
+          this.modalErrorMessage.set(
             error.error?.message || 'No se pudo agregar el producto al pedido.'
           );
         },
@@ -449,6 +387,7 @@ export class CashierOrders implements OnInit {
     }
 
     this.isUpdatingItem.set(true);
+    this.modalErrorMessage.set(null);
 
     this.ordersService
       .updateOrderItem(order.id, item.id, {
@@ -457,11 +396,11 @@ export class CashierOrders implements OnInit {
       .subscribe({
         next: () => {
           this.isUpdatingItem.set(false);
-          this.loadActiveSessionAndOrders(order.id);
+          this.refreshSelectedOrder(order.id);
         },
         error: (error: HttpErrorResponse) => {
           this.isUpdatingItem.set(false);
-          this.errorMessage.set(
+          this.modalErrorMessage.set(
             error.error?.message || 'No se pudo aumentar la cantidad.'
           );
         },
@@ -480,6 +419,7 @@ export class CashierOrders implements OnInit {
     }
 
     this.isUpdatingItem.set(true);
+    this.modalErrorMessage.set(null);
 
     this.ordersService
       .updateOrderItem(order.id, item.id, {
@@ -488,11 +428,11 @@ export class CashierOrders implements OnInit {
       .subscribe({
         next: () => {
           this.isUpdatingItem.set(false);
-          this.loadActiveSessionAndOrders(order.id);
+          this.refreshSelectedOrder(order.id);
         },
         error: (error: HttpErrorResponse) => {
           this.isUpdatingItem.set(false);
-          this.errorMessage.set(
+          this.modalErrorMessage.set(
             error.error?.message || 'No se pudo disminuir la cantidad.'
           );
         },
@@ -506,15 +446,16 @@ export class CashierOrders implements OnInit {
     }
 
     this.isUpdatingItem.set(true);
+    this.modalErrorMessage.set(null);
 
     this.ordersService.removeOrderItem(order.id, item.id).subscribe({
       next: () => {
         this.isUpdatingItem.set(false);
-        this.loadActiveSessionAndOrders(order.id);
+        this.refreshSelectedOrder(order.id);
       },
       error: (error: HttpErrorResponse) => {
         this.isUpdatingItem.set(false);
-        this.errorMessage.set(
+          this.modalErrorMessage.set(
           error.error?.message || 'No se pudo eliminar el item del pedido.'
         );
       },
@@ -531,6 +472,7 @@ export class CashierOrders implements OnInit {
       item.preparation_status === 'IN_PROGRESS' ? 'SERVED' : 'IN_PROGRESS';
 
     this.isUpdatingItem.set(true);
+    this.modalErrorMessage.set(null);
 
     this.ordersService
       .updateOrderItemPreparationStatus(order.id, item.id, {
@@ -539,11 +481,11 @@ export class CashierOrders implements OnInit {
       .subscribe({
         next: () => {
           this.isUpdatingItem.set(false);
-          this.loadActiveSessionAndOrders(order.id);
+          this.refreshSelectedOrder(order.id);
         },
         error: (error: HttpErrorResponse) => {
           this.isUpdatingItem.set(false);
-          this.errorMessage.set(
+          this.modalErrorMessage.set(
             error.error?.message || 'No se pudo actualizar el estado del item.'
           );
         },
@@ -557,7 +499,7 @@ export class CashierOrders implements OnInit {
     }
 
     if (!order.items.length) {
-      this.errorMessage.set('Un pedido sin items no puede cerrarse.');
+      this.modalErrorMessage.set('Un pedido sin items no puede cerrarse.');
       return;
     }
 
@@ -566,22 +508,24 @@ export class CashierOrders implements OnInit {
     );
 
     if (hasInProgressItems) {
-      this.errorMessage.set(
-        'Primero marca como SERVED todos los items antes de cerrar el pedido.'
+      this.modalErrorMessage.set(
+        'Primero marca como servido todos los items antes de cerrar el pedido.'
       );
       return;
     }
 
     this.isClosingOrder.set(true);
+    this.modalErrorMessage.set(null);
 
     this.ordersService.closeOrder(order.id, {}).subscribe({
       next: () => {
         this.isClosingOrder.set(false);
-        this.loadActiveSessionAndOrders(order.id);
+        this.loadSelectedOrder(order.id);
+        this.loadBoardOrders(order.id);
       },
       error: (error: HttpErrorResponse) => {
         this.isClosingOrder.set(false);
-        this.errorMessage.set(
+          this.modalErrorMessage.set(
           error.error?.message || 'No se pudo cerrar el pedido.'
         );
       },
@@ -595,15 +539,17 @@ export class CashierOrders implements OnInit {
     }
 
     this.isCancellingOrder.set(true);
+    this.modalErrorMessage.set(null);
 
     this.ordersService.cancelOrder(order.id, {}).subscribe({
       next: () => {
         this.isCancellingOrder.set(false);
-        this.loadActiveSessionAndOrders();
+        this.loadBoardOrders();
+        this.closeOrderDetail();
       },
       error: (error: HttpErrorResponse) => {
         this.isCancellingOrder.set(false);
-        this.errorMessage.set(
+          this.modalErrorMessage.set(
           error.error?.message || 'No se pudo cancelar el pedido.'
         );
       },
@@ -629,28 +575,24 @@ export class CashierOrders implements OnInit {
     this.paymentErrorMessage.set(null);
   }
 
+  togglePaidOrdersVisibility(): void {
+    this.isPaidOrdersCollapsed.update((value) => !value);
+  }
+
   confirmPayment(payload: CreateSaleRequest): void {
+    if (!this.selectedOrder()) {
+      return;
+    }
+
     this.isCreatingSale.set(true);
     this.paymentErrorMessage.set(null);
 
     this.salesService.createSale(payload).subscribe({
       next: () => {
-        const paidOrderId = payload.order_id;
-
         this.isCreatingSale.set(false);
         this.isPaymentModalOpen.set(false);
-
-        const remainingClosedOrders = this.closedOrdersPendingPayment().filter(
-          (order) => order.id !== paidOrderId
-        );
-        this.closedOrdersPendingPayment.set(remainingClosedOrders);
-
-        const nextSelectedOrderId =
-          this.openOrders()[0]?.id ||
-          remainingClosedOrders[0]?.id ||
-          undefined;
-
-        this.loadActiveSessionAndOrders(nextSelectedOrderId);
+        this.closeOrderDetail();
+        this.loadBoardOrders();
       },
       error: (error: HttpErrorResponse) => {
         this.isCreatingSale.set(false);
@@ -661,6 +603,22 @@ export class CashierOrders implements OnInit {
     });
   }
 
+  private refreshSelectedOrder(orderId: string): void {
+    this.loadSelectedOrder(orderId);
+    this.loadBoardOrders(orderId);
+  }
+
+  getSessionStatusLabel(status: string): string {
+    switch (status) {
+      case 'OPEN':
+        return 'Abierta';
+      case 'CLOSED':
+        return 'Cerrada';
+      default:
+        return status;
+    }
+  }
+
   getCategoryTypeLabel(type: string): string {
     switch (type) {
       case 'MAIN_DISH':
@@ -669,27 +627,122 @@ export class CashierOrders implements OnInit {
         return 'Bebida';
       case 'EXTRA':
         return 'Extra';
+      case 'SWEET':
+        return 'Dulce';
       default:
         return type;
     }
   }
 
+  getPreparationStatusLabel(status: string): string {
+    switch (status) {
+      case 'PENDING':
+        return 'Pendiente';
+      case 'IN_PROGRESS':
+        return 'En preparación';
+      case 'READY':
+        return 'Listo';
+      case 'SERVED':
+        return 'Servido';
+      default:
+        return status;
+    }
+  }
+
+  getPaymentStateLabel(status?: string): string {
+    switch (status) {
+      case 'PAID':
+        return 'Pagado';
+      case 'PENDING':
+        return 'Pendiente';
+      case 'UNPAID':
+        return 'Sin venta';
+      default:
+        return 'Sin venta';
+    }
+  }
+
+  getPaymentStateBadgeClass(status?: string): string {
+    switch (status) {
+      case 'PAID':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'PENDING':
+        return 'bg-amber-100 text-amber-700';
+      case 'UNPAID':
+        return 'bg-gray-100 text-gray-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  }
+
+  getOrderStatusLabel(status: string): string {
+    switch (status) {
+      case 'OPEN':
+        return 'Abierto';
+      case 'CLOSED':
+        return 'Cerrado';
+      case 'CANCELLED':
+        return 'Cancelado';
+      default:
+        return status;
+    }
+  }
+
   getPreparationBadgeClass(preparationStatus: string): string {
-    return preparationStatus === 'SERVED'
-      ? 'badge badge--success'
-      : 'badge badge--warning';
+    switch (preparationStatus) {
+      case 'SERVED':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'READY':
+        return 'bg-sky-100 text-sky-700';
+      case 'IN_PROGRESS':
+        return 'bg-amber-100 text-amber-700';
+      case 'PENDING':
+        return 'bg-gray-100 text-gray-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
   }
 
   getOrderStatusBadgeClass(status: string): string {
     switch (status) {
       case 'OPEN':
-        return 'badge badge--warning';
+        return 'bg-amber-100 text-amber-700';
       case 'CLOSED':
-        return 'badge badge--success';
+        return 'bg-emerald-100 text-emerald-700';
       case 'CANCELLED':
-        return 'badge badge--danger';
+        return 'bg-red-100 text-red-700';
       default:
-        return 'badge';
+        return 'bg-gray-100 text-gray-700';
     }
+  }
+
+  private getPreparationPriority(status: string): number {
+    switch (status) {
+      case 'IN_PROGRESS':
+        return 0;
+      case 'READY':
+        return 1;
+      case 'PENDING':
+        return 2;
+      case 'SERVED':
+        return 3;
+      default:
+        return 4;
+    }
+  }
+
+  private compareOrders(a: Order, b: Order): number {
+    const preparationA = this.getPreparationPriority(a.preparation_status);
+    const preparationB = this.getPreparationPriority(b.preparation_status);
+
+    if (preparationA !== preparationB) {
+      return preparationA - preparationB;
+    }
+
+    if (a.order_number !== b.order_number) {
+      return a.order_number - b.order_number;
+    }
+
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
   }
 }

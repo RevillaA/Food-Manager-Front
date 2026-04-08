@@ -3,7 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
-import { Order, OrderPreparationStatus, OrderStatus } from '../models/order.interface';
+import {
+  Order,
+  OrderPaymentState,
+  OrderPreparationStatus,
+  OrderStatus,
+} from '../models/order.interface';
 import { OrderItem } from '../models/order-item.interface';
 import { OrderDetail } from '../models/order-detail.interface';
 import { OrdersListResponse } from '../models/orders-list-response.interface';
@@ -78,6 +83,39 @@ export class OrdersService {
     }
 
     return this.http.get<OrdersListResponse>(this.baseUrl, { params });
+  }
+
+  getOrdersBoard(
+    page = 1,
+    limit = 10,
+    filters?: {
+      status?: OrderStatus;
+      preparation_status?: OrderPreparationStatus;
+      payment_state?: OrderPaymentState;
+      daily_session_id?: string;
+    }
+  ): Observable<OrdersListResponse> {
+    let params = new HttpParams()
+      .set('page', String(page))
+      .set('limit', String(limit));
+
+    if (filters?.status) {
+      params = params.set('status', filters.status);
+    }
+
+    if (filters?.preparation_status) {
+      params = params.set('preparation_status', filters.preparation_status);
+    }
+
+    if (filters?.payment_state) {
+      params = params.set('payment_state', filters.payment_state);
+    }
+
+    if (filters?.daily_session_id) {
+      params = params.set('daily_session_id', filters.daily_session_id);
+    }
+
+    return this.http.get<OrdersListResponse>(`${this.baseUrl}/board`, { params });
   }
 
   getOpenOrders(): Observable<OpenOrdersResponse> {

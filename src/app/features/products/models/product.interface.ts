@@ -1,7 +1,7 @@
 export interface ProductCategory {
   id: string;
   name: string;
-  category_type: 'MAIN_DISH' | 'DRINK' | 'EXTRA' | string;
+  category_type: 'MAIN_DISH' | 'DRINK' | 'EXTRA' | 'SWEET' | string;
   is_active: boolean;
 }
 

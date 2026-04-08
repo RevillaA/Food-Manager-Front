@@ -1,232 +1,320 @@
-<section class="page">
-  <div class="page__header">
+<section class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div>
-      <h2>Jornadas</h2>
-      <p>Control, auditoría e historial de jornadas operativas.</p>
+      <h1 class="text-2xl font-black text-[#111111]">Jornadas</h1>
+      <p class="mt-1 text-sm text-gray-500">
+        Control, auditoría e historial de jornadas operativas.
+      </p>
     </div>
 
     <button
       type="button"
-      class="primary-button"
+      class="inline-flex items-center justify-center rounded-2xl bg-[#E2552E] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#E2552E]/20 transition hover:-translate-y-0.5 hover:bg-[#C94724] disabled:cursor-not-allowed disabled:opacity-50"
       [disabled]="isSessionActionLoading() === 'open' || !!activeSession()"
       (click)="openTodaySession()"
     >
-      Abrir jornada de hoy
+      @if (isSessionActionLoading() === 'open') {
+        <span class="flex items-center gap-2">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+          Abriendo...
+        </span>
+      } @else {
+        Abrir jornada de hoy
+      }
     </button>
   </div>
 
   @if (errorMessage()) {
-    <div class="alert alert--error">
-      {{ errorMessage() }}
+    <div class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
+      <div class="mt-0.5 text-red-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.5 18h17a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"/>
+        </svg>
+      </div>
+      <div class="flex-1 leading-5">
+        {{ errorMessage() }}
+      </div>
     </div>
   }
 
-  <article class="summary-card">
-    <h3>Jornada activa</h3>
+  <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-bold text-[#111111]">Jornada activa</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          Estado actual de la operación.
+        </p>
+      </div>
+
+      @if (activeSession()) {
+        <span
+          class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+          [class.bg-emerald-100]="activeSession()?.status === 'OPEN'"
+          [class.text-emerald-700]="activeSession()?.status === 'OPEN'"
+          [class.bg-gray-100]="activeSession()?.status !== 'OPEN'"
+          [class.text-gray-700]="activeSession()?.status !== 'OPEN'"
+        >
+          {{ getSessionStatusLabel(activeSession()?.status || '') }}
+        </span>
+      }
+    </div>
 
     @if (isActiveLoading()) {
-      <p>Cargando jornada activa...</p>
+      <div class="mt-5 flex items-center gap-3 rounded-2xl bg-[#fffaf4] px-4 py-4 text-sm text-gray-600">
+        <span class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-[#E2552E]"></span>
+        Cargando jornada activa...
+      </div>
     } @else if (activeSession()) {
-      <div class="session-summary">
-        <div><strong>Fecha:</strong> {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}</div>
-        <div><strong>Estado:</strong> {{ activeSession()?.status }}</div>
-        <div><strong>Apertura:</strong> {{ activeSession()?.opened_at | date:'dd/MM/yyyy HH:mm' }}</div>
-        <div><strong>Abierta por:</strong> {{ activeSession()?.opened_by_user?.full_name }}</div>
+      <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-2xl bg-gray-50 px-4 py-4">
+          <p class="text-xs text-gray-400">Fecha</p>
+          <p class="mt-1 text-sm font-semibold text-[#111111]">
+            {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-gray-50 px-4 py-4">
+          <p class="text-xs text-gray-400">Estado</p>
+          <p class="mt-1 text-sm font-semibold text-[#111111]">
+            {{ getSessionStatusLabel(activeSession()?.status || '') }}
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-gray-50 px-4 py-4">
+          <p class="text-xs text-gray-400">Apertura</p>
+          <p class="mt-1 text-sm font-semibold text-[#111111]">
+            {{ activeSession()?.opened_at | date:'dd/MM/yyyy HH:mm' }}
+          </p>
+        </div>
+
+        <div class="rounded-2xl bg-gray-50 px-4 py-4">
+          <p class="text-xs text-gray-400">Abierta por</p>
+          <p class="mt-1 text-sm font-semibold text-[#111111]">
+            {{ activeSession()?.opened_by_user?.full_name }}
+          </p>
+        </div>
       </div>
     } @else {
-      <p>No existe jornada activa en este momento.</p>
+      <div class="mt-5 rounded-2xl bg-gray-50 px-4 py-4 text-sm text-gray-600">
+        No existe jornada activa en este momento.
+      </div>
     }
   </article>
 
-  <article class="filters-card">
-    <div class="filters">
-      <div class="filters__field">
-        <label for="statusFilter">Estado</label>
-        <select
-          id="statusFilter"
-          [value]="statusFilter()"
-          (change)="onStatusFilterChange($event)"
-        >
-          <option value="">Todos</option>
-          <option value="OPEN">OPEN</option>
-          <option value="CLOSED">CLOSED</option>
-        </select>
+  <article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div class="grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+      <div class="space-y-2">
+        <label for="statusFilter" class="text-sm font-semibold text-[#111111]">
+          Estado
+        </label>
+
+        <div class="relative">
+          <select
+            id="statusFilter"
+            class="w-full appearance-none rounded-2xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-[#111111] outline-none transition focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
+            [value]="statusFilter()"
+            (change)="onStatusFilterChange($event)"
+          >
+            <option value="">Todos</option>
+            <option value="OPEN">Abierta</option>
+            <option value="CLOSED">Cerrada</option>
+          </select>
+
+          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
+            </svg>
+          </span>
+        </div>
       </div>
 
-      <div class="filters__field">
-        <label for="dateFilter">Fecha</label>
+      <div class="space-y-2">
+        <label for="dateFilter" class="text-sm font-semibold text-[#111111]">
+          Fecha
+        </label>
         <input
           id="dateFilter"
           type="date"
+          class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[#111111] outline-none transition focus:border-[#E2552E] focus:ring-4 focus:ring-[#E2552E]/10"
           [value]="dateFilter()"
           (change)="onDateFilterChange($event)"
         />
       </div>
 
-      <div class="filters__actions">
-        <button type="button" class="secondary-button" (click)="applyFilters()">
+      <div class="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded-2xl bg-[#111111] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#E2552E]"
+          (click)="applyFilters()"
+        >
           Aplicar filtros
         </button>
 
-        <button type="button" class="secondary-button" (click)="clearFilters()">
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[#111111] transition hover:bg-gray-50"
+          (click)="clearFilters()"
+        >
           Limpiar
         </button>
       </div>
     </div>
   </article>
 
-  <div class="content-grid">
-    <article class="card">
-      <div class="card__header">
-        <h3>Lista de jornadas</h3>
+  <article class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+    <div class="border-b border-gray-100 px-6 py-5">
+      <h2 class="text-lg font-bold text-[#111111]">Lista de jornadas</h2>
+      <p class="mt-1 text-sm text-gray-500">
+        Haz click en una jornada para ver su detalle.
+      </p>
+    </div>
+
+    @if (isLoading()) {
+      <div class="flex min-h-[220px] items-center justify-center px-6 py-10">
+        <div class="text-center">
+          <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-[#E2552E]"></div>
+          <p class="text-sm font-medium text-gray-500">Cargando jornadas...</p>
+        </div>
       </div>
+    } @else if (sessions().length === 0) {
+      <div class="flex min-h-[220px] items-center justify-center px-6 py-10">
+        <div class="text-center">
+          <p class="text-base font-semibold text-[#111111]">No hay jornadas registradas</p>
+          <p class="mt-1 text-sm text-gray-500">
+            Ajusta los filtros o abre una nueva jornada.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-[#FFF8EF]">
+            <tr class="border-b border-[#f1ebe3]">
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Fecha
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Estado
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Apertura
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Cierre
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Abierta por
+              </th>
+              <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+                Acciones
+              </th>
+            </tr>
+          </thead>
 
-      @if (isLoading()) {
-        <div class="state-box">Cargando jornadas...</div>
-      } @else if (sessions().length === 0) {
-        <div class="state-box">No hay jornadas registradas.</div>
-      } @else {
-        <div class="table-wrapper">
-          <table class="sessions-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Estado</th>
-                <th>Apertura</th>
-                <th>Cierre</th>
-                <th>Abierta por</th>
-                <th class="text-right">Acciones</th>
-              </tr>
-            </thead>
+          <tbody>
+            @for (session of sessions(); track session.id) {
+              <tr
+                class="cursor-pointer border-b border-gray-100 transition hover:bg-[#fffaf4] last:border-b-0"
+                (click)="openSessionDetail(session)"
+              >
+                <td class="px-6 py-4 align-middle text-sm font-semibold text-[#111111]">
+                  {{ session.session_date | date:'dd/MM/yyyy' }}
+                </td>
 
-            <tbody>
-              @for (session of sessions(); track session.id) {
-                <tr
-                  [class.row-selected]="selectedSession()?.id === session.id"
-                  (click)="selectSession(session)"
-                >
-                  <td>{{ session.session_date | date:'dd/MM/yyyy' }}</td>
-                  <td>{{ session.status }}</td>
-                  <td>{{ session.opened_at | date:'dd/MM/yyyy HH:mm' }}</td>
-                  <td>{{ session.closed_at ? (session.closed_at | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
-                  <td>{{ session.opened_by_user.full_name }}</td>
-                  <td class="text-right">
-                    @if (session.status === 'OPEN') {
-                      <button
-                        type="button"
-                        class="table-button"
-                        [disabled]="isSessionActionLoading() === session.id"
-                        (click)="$event.stopPropagation(); closeSession(session)"
-                      >
+                <td class="px-6 py-4 align-middle">
+                  <span
+                    class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                    [class.bg-emerald-100]="session.status === 'OPEN'"
+                    [class.text-emerald-700]="session.status === 'OPEN'"
+                    [class.bg-gray-100]="session.status === 'CLOSED'"
+                    [class.text-gray-700]="session.status === 'CLOSED'"
+                  >
+                    {{ getSessionStatusLabel(session.status) }}
+                  </span>
+                </td>
+
+                <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                  {{ session.opened_at | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+
+                <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                  {{ session.closed_at ? (session.closed_at | date:'dd/MM/yyyy HH:mm') : '—' }}
+                </td>
+
+                <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                  {{ session.opened_by_user.full_name }}
+                </td>
+
+                <td class="px-6 py-4 text-right align-middle">
+                  @if (session.status === 'OPEN') {
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-xl bg-[#111111] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E2552E] disabled:cursor-not-allowed disabled:opacity-50"
+                      [disabled]="isSessionActionLoading() === session.id"
+                      (click)="$event.stopPropagation(); closeSession(session)"
+                    >
+                      @if (isSessionActionLoading() === session.id) {
+                        Procesando...
+                      } @else {
                         Cerrar
-                      </button>
-                    } @else {
-                      <button
-                        type="button"
-                        class="table-button"
-                        [disabled]="isSessionActionLoading() === session.id || !!activeSession()"
-                        (click)="$event.stopPropagation(); reopenSession(session)"
-                      >
+                      }
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center rounded-xl border border-[#eadfd2] bg-[#fff8ef] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:-translate-y-0.5 hover:border-[#E2552E]/30 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                      [disabled]="isSessionActionLoading() === session.id || !!activeSession()"
+                      (click)="$event.stopPropagation(); reopenSession(session)"
+                    >
+                      @if (isSessionActionLoading() === session.id) {
+                        Procesando...
+                      } @else {
                         Reabrir
-                      </button>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <div class="pagination">
-          <div class="pagination__summary">
-            Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
-          </div>
-
-          <div class="pagination__actions">
-            <button
-              type="button"
-              class="pagination__button"
-              [disabled]="page() <= 1"
-              (click)="goToPreviousPage()"
-            >
-              Anterior
-            </button>
-
-            <button
-              type="button"
-              class="pagination__button"
-              [disabled]="page() >= totalPages()"
-              (click)="goToNextPage()"
-            >
-              Siguiente
-            </button>
-          </div>
-        </div>
-      }
-    </article>
-
-    <article class="card">
-      <div class="card__header">
-        <h3>Detalle de jornada</h3>
+                      }
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
 
-      @if (!selectedSession()) {
-        <div class="state-box">Selecciona una jornada para ver su detalle.</div>
-      } @else {
-        <div class="session-detail">
-          <div><strong>Fecha:</strong> {{ selectedSession()?.session_date | date:'dd/MM/yyyy' }}</div>
-          <div><strong>Estado:</strong> {{ selectedSession()?.status }}</div>
-          <div><strong>Notas:</strong> {{ selectedSession()?.notes || '—' }}</div>
-          <div><strong>Abierta por:</strong> {{ selectedSession()?.opened_by_user?.full_name }}</div>
-          <div><strong>Cerrada por:</strong> {{ selectedSession()?.closed_by_user?.full_name || '—' }}</div>
+      <div class="flex flex-col gap-4 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="text-sm text-gray-500">
+          Página <span class="font-semibold text-[#111111]">{{ page() }}</span>
+          de <span class="font-semibold text-[#111111]">{{ totalPages() }}</span>
+          · Total: <span class="font-semibold text-[#111111]">{{ total() }}</span>
         </div>
 
-        <div class="subsection">
-          <h4>Pedidos asociados</h4>
+        <div class="flex gap-3">
+          <button
+            type="button"
+            class="inline-flex flex-1 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+            [disabled]="page() <= 1"
+            (click)="goToPreviousPage()"
+          >
+            Anterior
+          </button>
 
-          @if (isOrdersLoading()) {
-            <div class="state-box">Cargando pedidos de la jornada...</div>
-          } @else if (selectedSessionOrders().length === 0) {
-            <div class="state-box">No hay pedidos registrados en esta jornada.</div>
-          } @else {
-            <div class="table-wrapper">
-              <table class="orders-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Estado</th>
-                    <th>Preparación</th>
-                    <th>Subtotal</th>
-                    <th>Creado por</th>
-                    <th>Hora</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  @for (order of selectedSessionOrders(); track order.id) {
-                    <tr>
-                      <td>#{{ order.order_number }}</td>
-                      <td>
-                        <span [class]="getOrderStatusBadgeClass(order.status)">
-                          {{ order.status }}
-                        </span>
-                      </td>
-                      <td>
-                        <span [class]="getPreparationBadgeClass(order.preparation_status)">
-                          {{ order.preparation_status }}
-                        </span>
-                      </td>
-                      <td>{{ order.subtotal | number:'1.2-2' }}</td>
-                      <td>{{ order.created_by_user.full_name }}</td>
-                      <td>{{ order.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
+          <button
+            type="button"
+            class="inline-flex flex-1 items-center justify-center rounded-xl bg-[#111111] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#E2552E] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+            [disabled]="page() >= totalPages()"
+            (click)="goToNextPage()"
+          >
+            Siguiente
+          </button>
         </div>
-      }
-    </article>
-  </div>
+      </div>
+    }
+  </article>
 </section>
+
+<app-daily-session-detail-modal
+  [isOpen]="isDetailModalOpen()"
+  [session]="detailSession()"
+  [orders]="detailOrders()"
+  [isLoadingOrders]="isDetailLoading()"
+  (closed)="closeSessionDetail()"
+/>

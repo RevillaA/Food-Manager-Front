@@ -1,5 +1,6 @@
 export type OrderStatus = 'OPEN' | 'CLOSED' | 'CANCELLED';
 export type OrderPreparationStatus = 'IN_PROGRESS' | 'SERVED';
+export type OrderPaymentState = 'UNPAID' | 'PENDING' | 'PAID';
 
 export interface OrderCreatedByUser {
   id: string;
@@ -14,6 +15,7 @@ export interface Order {
   order_number: number;
   status: OrderStatus;
   preparation_status: OrderPreparationStatus;
+  payment_state?: OrderPaymentState;
   subtotal: number;
   notes: string | null;
   closed_at: string | null;

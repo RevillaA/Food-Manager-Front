@@ -1,311 +1,531 @@
-<section class="operations-page">
-  <div class="operations-page__header">
-    <div>
-      <h2>Operación del día</h2>
-      <p>Trabaja sobre la jornada activa con un flujo rápido tipo POS.</p>
-    </div>
+<section class="space-y-6 pb-24">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div class="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
+      <div>
+        <h1 class="text-2xl font-black text-[#111111]">Pedidos</h1>
+        <p class="mt-1 text-sm text-gray-500">
+          Flujo operativo simple para trabajar sobre la jornada activa.
+        </p>
+      </div>
 
-    <div class="header-actions">
-      @if (!activeSession()) {
-        <button
-          type="button"
-          class="primary-button"
-          [disabled]="isBusy()"
-          (click)="openTodaySession()"
-        >
-          Abrir jornada de hoy
-        </button>
+      @if (isLoadingSession()) {
+        <div class="inline-flex items-center gap-2 rounded-2xl border border-[#f1ebe3] bg-[#fffaf4] px-4 py-3 text-xs font-medium text-gray-600">
+          <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-[#E2552E]"></span>
+          Cargando jornada...
+        </div>
+      } @else if (activeSession()) {
+        <div class="flex flex-wrap items-center gap-2">
+          <span
+            class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+            [class.bg-emerald-100]="activeSession()?.status === 'OPEN'"
+            [class.text-emerald-700]="activeSession()?.status === 'OPEN'"
+            [class.bg-gray-100]="activeSession()?.status !== 'OPEN'"
+            [class.text-gray-700]="activeSession()?.status !== 'OPEN'"
+          >
+            Jornada {{ getSessionStatusLabel(activeSession()?.status || '') }}
+          </span>
+
+          <span class="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-[#111111]">
+            Fecha: {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}
+          </span>
+
+          <span class="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-[#111111]">
+            Apertura: {{ activeSession()?.opened_at | date:'HH:mm' }}
+          </span>
+        </div>
       } @else {
-        <button
-          type="button"
-          class="primary-button"
-          [disabled]="isBusy()"
-          (click)="createNewOrder()"
-        >
-          Nuevo pedido
-        </button>
+        <div class="inline-flex rounded-2xl bg-gray-100 px-4 py-3 text-xs font-medium text-gray-600">
+          No hay jornada activa.
+        </div>
       }
     </div>
   </div>
 
   @if (errorMessage()) {
-    <div class="alert alert--error">
-      {{ errorMessage() }}
+    <div class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
+      <div class="mt-0.5 text-red-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.5 18h17a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"/>
+        </svg>
+      </div>
+      <div class="flex-1 leading-5">
+        {{ errorMessage() }}
+      </div>
     </div>
   }
-
-  <article class="session-banner">
-    @if (isLoadingSession()) {
-      <p>Cargando estado de la jornada...</p>
-    } @else if (activeSession()) {
-      <div class="session-banner__content">
-        <div><strong>Jornada activa:</strong> {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}</div>
-        <div><strong>Estado:</strong> {{ activeSession()?.status }}</div>
-        <div><strong>Abierta por:</strong> {{ activeSession()?.opened_by_user?.full_name }}</div>
-        <div><strong>Apertura:</strong> {{ activeSession()?.opened_at | date:'dd/MM/yyyy HH:mm' }}</div>
-      </div>
-    } @else {
-      <p>No existe jornada activa. Primero debes abrir la jornada del día.</p>
-    }
-  </article>
 
   @if (activeSession()) {
-    <div class="operations-grid">
-      <article class="panel">
-        <div class="panel__header">
-          <h3>Pedidos abiertos</h3>
-        </div>
-
-        @if (isLoadingOrders() || isLoadingSales()) {
-          <div class="state-box">Cargando pedidos...</div>
-        } @else if (openOrders().length === 0) {
-          <div class="state-box">No hay pedidos abiertos. Crea el primero.</div>
-        } @else {
-          <div class="order-queue">
-            @for (order of openOrders(); track order.id) {
-              <button
-                type="button"
-                class="order-card"
-                [class.order-card--selected]="selectedOrder()?.id === order.id"
-                (click)="selectOrder(order.id)"
-              >
-                <div class="order-card__top">
-                  <strong>#{{ order.order_number }}</strong>
-                  <span [class]="getPreparationBadgeClass(order.preparation_status)">
-                    {{ order.preparation_status }}
-                  </span>
-                </div>
-
-                <div class="order-card__meta">
-                  <span>Subtotal: {{ order.subtotal | number:'1.2-2' }}</span>
-                  <span>{{ order.created_at | date:'HH:mm' }}</span>
-                </div>
-              </button>
-            }
+    <article class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+      <div class="border-b border-gray-100 px-6 py-5">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-[#111111]">Pedidos de la jornada activa</h2>
           </div>
-        }
 
-        <div class="panel__subheader">
-          <h4>Pedidos listos para cobrar</h4>
+          <span class="rounded-full bg-[#F6E7A7] px-3 py-1 text-xs font-semibold text-[#111111]">
+            {{ totalVisibleOrders() }} pedidos
+          </span>
         </div>
+      </div>
 
-        @if (isLoadingOrders() || isLoadingSales()) {
-          <div class="state-box">Cargando pedidos cerrados...</div>
-        } @else if (closedOrdersPendingPayment().length === 0) {
-          <div class="state-box">No hay pedidos cerrados pendientes de cobro.</div>
-        } @else {
-          <div class="order-queue">
-            @for (order of closedOrdersPendingPayment(); track order.id) {
-              <button
-                type="button"
-                class="order-card order-card--closed"
-                [class.order-card--selected]="selectedOrder()?.id === order.id"
-                (click)="selectOrder(order.id)"
-              >
-                <div class="order-card__top">
-                  <strong>#{{ order.order_number }}</strong>
-                  <span class="badge badge--success">CLOSED</span>
-                </div>
-
-                <div class="order-card__meta">
-                  <span>Subtotal: {{ order.subtotal | number:'1.2-2' }}</span>
-                  <span>{{ order.created_at | date:'HH:mm' }}</span>
-                </div>
-              </button>
-            }
+      @if (isLoadingOrders()) {
+        <div class="flex min-h-[220px] items-center justify-center px-6 py-10">
+          <div class="text-center">
+            <div class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-[#E2552E]"></div>
+            <p class="text-sm font-medium text-gray-500">Cargando pedidos...</p>
           </div>
-        }
-      </article>
-
-      <article class="panel">
-        <div class="panel__header">
-          <h3>Pedido actual</h3>
         </div>
-
-        @if (isLoadingOrderDetail()) {
-          <div class="state-box">Cargando detalle del pedido...</div>
-        } @else if (!selectedOrder()) {
-          <div class="state-box">
-            Selecciona un pedido de la cola o crea uno nuevo para comenzar.
+      } @else if (!hasVisibleOrders()) {
+        <div class="flex min-h-[220px] items-center justify-center px-6 py-10">
+          <div class="text-center">
+            <p class="text-base font-semibold text-[#111111]">
+              No hay pedidos en la jornada activa
+            </p>
+            <p class="mt-1 text-sm text-gray-500">
+              Aquí aparecerán los pedidos en preparación, servidos, cerrados y pagados.
+            </p>
           </div>
-        } @else {
-          <div class="order-detail">
-            <div class="order-detail__summary">
-              <div><strong>Pedido:</strong> #{{ selectedOrder()?.order_number }}</div>
+        </div>
+      } @else {
+        <div class="space-y-8 p-6">
+          <section class="space-y-4">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <strong>Estado:</strong>
-                <span [class]="getOrderStatusBadgeClass(selectedOrder()?.status || '')">
-                  {{ selectedOrder()?.status }}
-                </span>
+                <h3 class="text-base font-bold text-[#111111]">Pedidos en preparación</h3>
+                <p class="text-sm text-gray-500">
+                  Pedidos abiertos que todavía están en proceso.
+                </p>
               </div>
-              <div>
-                <strong>Preparación:</strong>
-                <span [class]="getPreparationBadgeClass(selectedOrder()?.preparation_status || '')">
-                  {{ selectedOrder()?.preparation_status }}
-                </span>
-              </div>
-              <div><strong>Subtotal:</strong> {{ selectedOrder()?.subtotal | number:'1.2-2' }}</div>
+
+              <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                {{ preparationOrders().length }} pedidos
+              </span>
             </div>
 
-            @if (isSelectedOrderPaid()) {
-              <div class="info-banner">
-                Este pedido ya fue cobrado y se conserva solo como histórico.
+            @if (preparationOrders().length === 0) {
+              <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-6 text-sm text-amber-800">
+                No hay pedidos en preparación.
               </div>
-            }
-
-            <div class="order-detail__actions">
-              <button
-                type="button"
-                class="secondary-button"
-                [disabled]="!canOperateOrder() || isBusy()"
-                (click)="closeSelectedOrder()"
-              >
-                Cerrar pedido
-              </button>
-
-              <button
-                type="button"
-                class="danger-button"
-                [disabled]="!canOperateOrder() || isBusy()"
-                (click)="cancelSelectedOrder()"
-              >
-                Cancelar pedido
-              </button>
-
-              <button
-                type="button"
-                class="primary-button"
-                [disabled]="!canChargeOrder() || isBusy()"
-                (click)="openPaymentModal()"
-              >
-                Cobrar
-              </button>
-            </div>
-
-            <div class="items-list">
-              @if (selectedOrderItems().length === 0) {
-                <div class="state-box">
-                  Este pedido aún no tiene items. Usa el catálogo para agregar productos.
-                </div>
-              } @else {
-                @for (item of selectedOrderItems(); track item.id) {
-                  <div class="item-card">
-                    <div class="item-card__main">
-                      <strong>{{ item.product_name }}</strong>
-                      <span>{{ item.product_category_name }}</span>
-                      <span>Unitario: {{ item.unit_price | number:'1.2-2' }}</span>
-                    </div>
-
-                    <div class="item-card__controls">
-                      <div class="quantity-controls">
-                        <button
-                          type="button"
-                          [disabled]="!canOperateOrder() || isBusy()"
-                          (click)="decreaseItemQuantity(item)"
-                        >
-                          −
-                        </button>
-                        <span>{{ item.quantity }}</span>
-                        <button
-                          type="button"
-                          [disabled]="!canOperateOrder() || isBusy()"
-                          (click)="increaseItemQuantity(item)"
-                        >
-                          +
-                        </button>
+            } @else {
+              <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @for (order of preparationOrders(); track order.id) {
+                  <button
+                    type="button"
+                    class="rounded-3xl border border-amber-200 bg-amber-50/80 p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:shadow-md"
+                    (click)="openOrderDetail(order.id)"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-amber-700/70">
+                          Pedido
+                        </p>
+                        <h3 class="mt-1 text-xl font-black text-[#111111]">
+                          #{{ order.order_number }}
+                        </h3>
                       </div>
 
-                      <button
-                        type="button"
-                        class="secondary-button"
-                        [disabled]="!canOperateOrder() || isBusy()"
-                        (click)="toggleItemPreparationStatus(item)"
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                        [class]="getPreparationBadgeClass(order.preparation_status)"
                       >
-                        {{ item.preparation_status === 'IN_PROGRESS' ? 'Marcar servido' : 'Marcar en preparación' }}
-                      </button>
-
-                      <button
-                        type="button"
-                        class="danger-button"
-                        [disabled]="!canOperateOrder() || isBusy()"
-                        (click)="removeItem(item)"
-                      >
-                        Quitar
-                      </button>
-                    </div>
-
-                    <div class="item-card__footer">
-                      <span [class]="getPreparationBadgeClass(item.preparation_status)">
-                        {{ item.preparation_status }}
+                        {{ getPreparationStatusLabel(order.preparation_status) }}
                       </span>
-                      <strong>Total: {{ item.line_total | number:'1.2-2' }}</strong>
                     </div>
-                  </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                      <div class="rounded-2xl bg-white/80 px-3 py-3">
+                        <p class="text-xs text-amber-700/70">Subtotal</p>
+                        <p class="mt-1 text-sm font-semibold text-[#111111]">
+                          $ {{ order.subtotal | number:'1.2-2' }}
+                        </p>
+                      </div>
+
+                      <div class="rounded-2xl bg-white/80 px-3 py-3">
+                        <p class="text-xs text-amber-700/70">Hora</p>
+                        <p class="mt-1 text-sm font-semibold text-[#111111]">
+                          {{ order.created_at | date:'HH:mm' }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between text-sm">
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                        [class]="getOrderStatusBadgeClass(order.status)"
+                      >
+                        {{ getOrderStatusLabel(order.status) }}
+                      </span>
+
+                      <span class="font-semibold text-amber-700">
+                        Ver pedido →
+                      </span>
+                    </div>
+                  </button>
                 }
-              }
+              </div>
+            }
+          </section>
+
+          <section class="space-y-4">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 class="text-base font-bold text-[#111111]">Pedidos servidos</h3>
+                <p class="text-sm text-gray-500">
+                  Pedidos abiertos cuyos ítems ya fueron servidos.
+                </p>
+              </div>
+
+              <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                {{ servedOrders().length }} pedidos
+              </span>
             </div>
-          </div>
-        }
-      </article>
 
-      <article class="panel">
-        <div class="panel__header">
-          <h3>Catálogo rápido</h3>
-        </div>
+            @if (servedOrders().length === 0) {
+              <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-6 text-sm text-emerald-800">
+                No hay pedidos servidos.
+              </div>
+            } @else {
+              <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @for (order of servedOrders(); track order.id) {
+                  <button
+                    type="button"
+                    class="rounded-3xl border border-emerald-200 bg-emerald-50/80 p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-md"
+                    (click)="openOrderDetail(order.id)"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700/70">
+                          Pedido
+                        </p>
+                        <h3 class="mt-1 text-xl font-black text-[#111111]">
+                          #{{ order.order_number }}
+                        </h3>
+                      </div>
 
-        <div class="catalog-filters">
-          <select
-            [value]="selectedCategoryId()"
-            (change)="onCategoryFilterChange($event)"
-          >
-            <option value="">Todas las categorías</option>
-            @for (category of categories(); track category.id) {
-              <option [value]="category.id">
-                {{ category.name }} — {{ getCategoryTypeLabel(category.category_type) }}
-              </option>
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                        [class]="getPreparationBadgeClass(order.preparation_status)"
+                      >
+                        {{ getPreparationStatusLabel(order.preparation_status) }}
+                      </span>
+                    </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                      <div class="rounded-2xl bg-white/80 px-3 py-3">
+                        <p class="text-xs text-emerald-700/70">Subtotal</p>
+                        <p class="mt-1 text-sm font-semibold text-[#111111]">
+                          $ {{ order.subtotal | number:'1.2-2' }}
+                        </p>
+                      </div>
+
+                      <div class="rounded-2xl bg-white/80 px-3 py-3">
+                        <p class="text-xs text-emerald-700/70">Hora</p>
+                        <p class="mt-1 text-sm font-semibold text-[#111111]">
+                          {{ order.created_at | date:'HH:mm' }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between text-sm">
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                        [class]="getOrderStatusBadgeClass(order.status)"
+                      >
+                        {{ getOrderStatusLabel(order.status) }}
+                      </span>
+
+                      <span class="font-semibold text-emerald-700">
+                        Ver pedido →
+                      </span>
+                    </div>
+                  </button>
+                }
+              </div>
             }
-          </select>
+          </section>
 
-          <button
-            type="button"
-            class="secondary-button"
-            [disabled]="!selectedCategoryId()"
-            (click)="clearCategoryFilter()"
-          >
-            Limpiar
-          </button>
-        </div>
+          <section class="space-y-4">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 class="text-base font-bold text-[#111111]">Pedidos cerrados</h3>
+                <p class="text-sm text-gray-500">
+                  Pedidos cerrados listos para revisión o cobro.
+                </p>
+              </div>
 
-        @if (isLoadingProducts()) {
-          <div class="state-box">Cargando productos...</div>
-        } @else if (groupedProducts().length === 0) {
-          <div class="state-box">No hay productos activos para el filtro seleccionado.</div>
-        } @else {
-          <div class="catalog-grid">
-            @for (product of groupedProducts(); track product.id) {
-              <button
-                type="button"
-                class="product-card"
-                [disabled]="isBusy()"
-                (click)="addProductToOrder(product)"
-              >
-                <strong>{{ product.name }}</strong>
-                <span>{{ product.category.name }}</span>
-                <small>{{ product.base_price | number:'1.2-2' }}</small>
-              </button>
+              <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+                {{ closedOrders().length }} pedidos
+              </span>
+            </div>
+
+            @if (closedOrders().length === 0) {
+              <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-800">
+                No hay pedidos cerrados.
+              </div>
+            } @else {
+              <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @for (order of closedOrders(); track order.id) {
+                  <button
+                    type="button"
+                    class="rounded-3xl border border-rose-200 bg-rose-50/80 p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-50 hover:shadow-md"
+                    (click)="openOrderDetail(order.id)"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-700/70">
+                          Pedido
+                        </p>
+                        <h3 class="mt-1 text-xl font-black text-[#111111]">
+                          #{{ order.order_number }}
+                        </h3>
+                      </div>
+
+                      <div class="flex flex-col items-end gap-2">
+                        <span
+                          class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                          [class]="getPreparationBadgeClass(order.preparation_status)"
+                        >
+                          {{ getPreparationStatusLabel(order.preparation_status) }}
+                        </span>
+
+                        <span
+                          class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                          [class]="getPaymentStateBadgeClass(order.payment_state)"
+                        >
+                          {{ getPaymentStateLabel(order.payment_state) }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                      <div class="rounded-2xl bg-white/80 px-3 py-3">
+                        <p class="text-xs text-rose-700/70">Subtotal</p>
+                        <p class="mt-1 text-sm font-semibold text-[#111111]">
+                          $ {{ order.subtotal | number:'1.2-2' }}
+                        </p>
+                      </div>
+
+                      <div class="rounded-2xl bg-white/80 px-3 py-3">
+                        <p class="text-xs text-rose-700/70">Hora</p>
+                        <p class="mt-1 text-sm font-semibold text-[#111111]">
+                          {{ order.created_at | date:'HH:mm' }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between text-sm">
+                      <span
+                        class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                        [class]="getOrderStatusBadgeClass(order.status)"
+                      >
+                        {{ getOrderStatusLabel(order.status) }}
+                      </span>
+
+                      <span class="font-semibold text-rose-700">
+                        Ver pedido →
+                      </span>
+                    </div>
+                  </button>
+                }
+              </div>
             }
-          </div>
-        }
-      </article>
-    </div>
+          </section>
+
+          <section class="space-y-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-base font-bold text-[#111111]">Pedidos pagados</h3>
+
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-50"
+                    (click)="togglePaidOrdersVisibility()"
+                    [attr.aria-expanded]="!isPaidOrdersCollapsed()"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-4 w-4 transition"
+                      [class.rotate-180]="!isPaidOrdersCollapsed()"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06Z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+
+                    {{ isPaidOrdersCollapsed() ? 'Mostrar' : 'Ocultar' }}
+                  </button>
+                </div>
+
+                <p class="mt-1 text-sm text-gray-500">
+                  Pedidos ya cobrados separados del flujo operativo del cajero.
+                </p>
+              </div>
+
+              <span class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
+                {{ paidOrders().length }} pedidos
+              </span>
+            </div>
+
+            @if (isPaidOrdersCollapsed()) {
+              <div class="rounded-2xl border border-dashed border-sky-200 bg-sky-50/70 px-4 py-4 text-sm text-sky-800">
+                La sección de pedidos pagados está oculta.
+              </div>
+            } @else {
+              @if (paidOrders().length === 0) {
+                <div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-6 text-sm text-sky-800">
+                  No hay pedidos pagados.
+                </div>
+              } @else {
+                <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  @for (order of paidOrders(); track order.id) {
+                    <button
+                      type="button"
+                      class="rounded-3xl border border-sky-200 bg-sky-50/80 p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-50 hover:shadow-md"
+                      (click)="openOrderDetail(order.id)"
+                    >
+                      <div class="flex items-start justify-between gap-3">
+                        <div>
+                          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-sky-700/70">
+                            Pedido
+                          </p>
+                          <h3 class="mt-1 text-xl font-black text-[#111111]">
+                            #{{ order.order_number }}
+                          </h3>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-2">
+                          <span
+                            class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                            [class]="getPreparationBadgeClass(order.preparation_status)"
+                          >
+                            {{ getPreparationStatusLabel(order.preparation_status) }}
+                          </span>
+
+                          <span
+                            class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                            [class]="getPaymentStateBadgeClass(order.payment_state)"
+                          >
+                            {{ getPaymentStateLabel(order.payment_state) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                        <div class="rounded-2xl bg-white/85 px-3 py-3">
+                          <p class="text-xs text-sky-700/70">Subtotal</p>
+                          <p class="mt-1 text-sm font-semibold text-[#111111]">
+                            $ {{ order.subtotal | number:'1.2-2' }}
+                          </p>
+                        </div>
+
+                        <div class="rounded-2xl bg-white/85 px-3 py-3">
+                          <p class="text-xs text-sky-700/70">Hora</p>
+                          <p class="mt-1 text-sm font-semibold text-[#111111]">
+                            {{ order.created_at | date:'HH:mm' }}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="mt-4 flex items-center justify-between text-sm">
+                        <span
+                          class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                          [class]="getOrderStatusBadgeClass(order.status)"
+                        >
+                          {{ getOrderStatusLabel(order.status) }}
+                        </span>
+
+                        <span class="font-semibold text-sky-700">
+                          Ver pedido →
+                        </span>
+                      </div>
+                    </button>
+                  }
+                </div>
+              }
+            }
+          </section>
+        </div>
+      }
+    </article>
   }
-
-  <app-quick-payment-modal
-    [isOpen]="isPaymentModalOpen()"
-    [isSubmitting]="isCreatingSale()"
-    [order]="selectedOrder()"
-    [errorMessage]="paymentErrorMessage()"
-    (closed)="closePaymentModal()"
-    (confirmed)="confirmPayment($event)"
-  />
 </section>
+
+<div class="fixed bottom-6 right-6 z-40">
+  @if (!activeSession()) {
+    <button
+      type="button"
+      class="inline-flex items-center justify-center rounded-2xl bg-[#E2552E] px-5 py-4 text-sm font-semibold text-white shadow-xl shadow-[#E2552E]/30 transition hover:-translate-y-0.5 hover:bg-[#C94724] disabled:cursor-not-allowed disabled:opacity-50"
+      [disabled]="isBusy()"
+      (click)="openTodaySession()"
+    >
+      @if (isOpeningSession()) {
+        <span class="flex items-center gap-2">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+          Abriendo...
+        </span>
+      } @else {
+        Abrir jornada
+      }
+    </button>
+  } @else {
+    <button
+      type="button"
+      class="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#E2552E] px-5 py-4 text-sm font-semibold text-white shadow-xl shadow-[#E2552E]/30 transition hover:-translate-y-0.5 hover:bg-[#C94724] disabled:cursor-not-allowed disabled:opacity-50"
+      [disabled]="isBusy()"
+      (click)="createNewOrder()"
+    >
+      @if (isCreatingOrder()) {
+        <span class="flex items-center gap-2">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+          Creando...
+        </span>
+      } @else {
+        <span class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+          </svg>
+          Nuevo pedido
+        </span>
+      }
+    </button>
+  }
+</div>
+
+<app-order-detail-modal
+  [isOpen]="isDetailModalOpen()"
+  [order]="selectedOrder()"
+  [categories]="categories()"
+  [products]="filteredCatalogProducts()"
+  [selectedCategoryId]="selectedCategoryId()"
+  [isLoadingOrderDetail]="isLoadingOrderDetail()"
+  [isLoadingProducts]="isLoadingProducts()"
+  [isBusy]="isBusy()"
+  [canOperateOrder]="canOperateOrder()"
+  [canChargeOrder]="canChargeOrder()"
+  [errorMessage]="modalErrorMessage()"
+  (closed)="closeOrderDetail()"
+  (categoryFilterChanged)="setCatalogCategoryFilter($event)"
+  (clearCategoryFilter)="clearCatalogCategoryFilter()"
+  (addProduct)="addProductToOrder($event)"
+  (increaseQuantity)="increaseItemQuantity($event)"
+  (decreaseQuantity)="decreaseItemQuantity($event)"
+  (togglePreparation)="toggleItemPreparationStatus($event)"
+  (removeItem)="removeItem($event)"
+  (closeOrder)="closeSelectedOrder()"
+  (cancelOrder)="cancelSelectedOrder()"
+  (chargeOrder)="openPaymentModal()"
+/>
+
+<app-quick-payment-modal
+  [isOpen]="isPaymentModalOpen()"
+  [isSubmitting]="isCreatingSale()"
+  [order]="selectedOrder()"
+  [errorMessage]="paymentErrorMessage()"
+  (closed)="closePaymentModal()"
+  (confirmed)="confirmPayment($event)"
+/>

@@ -202,6 +202,8 @@ export class ProductList implements OnInit {
         return 'Bebida';
       case 'EXTRA':
         return 'Extra';
+      case 'SWEET':
+        return 'Dulce';
       default:
         return type;
     }

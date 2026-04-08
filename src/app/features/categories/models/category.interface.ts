@@ -1,4 +1,4 @@
-export type CategoryType = 'MAIN_DISH' | 'DRINK' | 'EXTRA';
+export type CategoryType = 'MAIN_DISH' | 'DRINK' | 'EXTRA' | 'SWEET';
 
 export interface Category {
   id: string;

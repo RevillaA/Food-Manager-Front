@@ -5,8 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { DailySession, DailySessionStatus } from '../../models/daily-session.interface';
@@ -16,11 +15,12 @@ import { DailySessionsService } from '../../services/daily-sessions';
 import { OrdersService } from '../../../orders/services/orders';
 import { Order } from '../../../orders/models/order.interface';
 import { OrdersListResponse } from '../../../orders/models/orders-list-response.interface';
+import { DailySessionDetailModal } from '../../components/daily-session-detail-modal/daily-session-detail-modal';
 
 @Component({
   selector: 'app-daily-session-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, DecimalPipe],
+  imports: [CommonModule, DatePipe, DailySessionDetailModal],
   templateUrl: './daily-session-list.html',
   styleUrl: './daily-session-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,13 +32,10 @@ export class DailySessionList implements OnInit {
   readonly isLoading = signal(true);
   readonly isActiveLoading = signal(true);
   readonly isSessionActionLoading = signal<string | null>(null);
-  readonly isOrdersLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
   readonly activeSession = signal<DailySession | null>(null);
   readonly sessions = signal<DailySession[]>([]);
-  readonly selectedSession = signal<DailySession | null>(null);
-  readonly selectedSessionOrders = signal<Order[]>([]);
 
   readonly page = signal(1);
   readonly limit = signal(10);
@@ -47,6 +44,11 @@ export class DailySessionList implements OnInit {
 
   readonly statusFilter = signal<DailySessionStatus | ''>('');
   readonly dateFilter = signal('');
+
+  readonly isDetailModalOpen = signal(false);
+  readonly isDetailLoading = signal(false);
+  readonly detailSession = signal<DailySession | null>(null);
+  readonly detailOrders = signal<Order[]>([]);
 
   ngOnInit(): void {
     this.loadActiveSession();
@@ -92,23 +94,6 @@ export class DailySessionList implements OnInit {
           this.total.set(response.meta.total);
           this.totalPages.set(response.meta.totalPages);
           this.isLoading.set(false);
-
-          const currentSelectedId = this.selectedSession()?.id;
-          if (currentSelectedId) {
-            const selected = response.data.find((session) => session.id === currentSelectedId);
-            if (selected) {
-              this.selectedSession.set(selected);
-              this.loadOrdersForSession(selected.id);
-              return;
-            }
-          }
-
-          if (response.data.length > 0) {
-            this.selectSession(response.data[0]);
-          } else {
-            this.selectedSession.set(null);
-            this.selectedSessionOrders.set([]);
-          }
         },
         error: (error: HttpErrorResponse) => {
           this.errorMessage.set(
@@ -119,16 +104,26 @@ export class DailySessionList implements OnInit {
       });
   }
 
-  selectSession(session: DailySession): void {
-    this.selectedSession.set(session);
-    this.loadOrdersForSession(session.id);
-  }
+  openSessionDetail(session: DailySession): void {
+    this.isDetailModalOpen.set(true);
+    this.isDetailLoading.set(true);
+    this.detailSession.set(session);
+    this.detailOrders.set([]);
+    this.errorMessage.set(null);
 
-  loadOrdersForSession(dailySessionId: string): void {
-    this.isOrdersLoading.set(true);
+    this.dailySessionsService.getDailySessionById(session.id).subscribe({
+      next: (response) => {
+        this.detailSession.set(response.data);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage.set(
+          error.error?.message || 'No se pudo cargar el detalle de la jornada.'
+        );
+      },
+    });
 
     this.ordersService
-      .getOrders(1, 100, { daily_session_id: dailySessionId })
+      .getOrders(1, 100, { daily_session_id: session.id })
       .subscribe({
         next: (response: OrdersListResponse) => {
           const sorted = [...response.data].sort((a, b) => {
@@ -139,16 +134,23 @@ export class DailySessionList implements OnInit {
             return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           });
 
-          this.selectedSessionOrders.set(sorted);
-          this.isOrdersLoading.set(false);
+          this.detailOrders.set(sorted);
+          this.isDetailLoading.set(false);
         },
         error: (error: HttpErrorResponse) => {
           this.errorMessage.set(
             error.error?.message || 'No se pudieron cargar los pedidos de la jornada.'
           );
-          this.isOrdersLoading.set(false);
+          this.isDetailLoading.set(false);
         },
       });
+  }
+
+  closeSessionDetail(): void {
+    this.isDetailModalOpen.set(false);
+    this.detailSession.set(null);
+    this.detailOrders.set([]);
+    this.isDetailLoading.set(false);
   }
 
   openTodaySession(): void {
@@ -177,6 +179,10 @@ export class DailySessionList implements OnInit {
         this.isSessionActionLoading.set(null);
         this.loadActiveSession();
         this.loadSessions(this.page());
+
+        if (this.detailSession()?.id === session.id) {
+          this.openSessionDetail(session);
+        }
       },
       error: (error: HttpErrorResponse) => {
         this.isSessionActionLoading.set(null);
@@ -197,6 +203,10 @@ export class DailySessionList implements OnInit {
           this.isSessionActionLoading.set(null);
           this.loadActiveSession();
           this.loadSessions(this.page());
+
+          if (this.detailSession()?.id === session.id) {
+            this.openSessionDetail(session);
+          }
         },
         error: (error: HttpErrorResponse) => {
           this.isSessionActionLoading.set(null);
@@ -219,8 +229,7 @@ export class DailySessionList implements OnInit {
 
   onStatusFilterChange(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    const value = target.value as DailySessionStatus | '';
-    this.statusFilter.set(value);
+    this.statusFilter.set(target.value as DailySessionStatus | '');
   }
 
   onDateFilterChange(event: Event): void {
@@ -244,20 +253,14 @@ export class DailySessionList implements OnInit {
     this.loadSessions(this.page() + 1);
   }
 
-  getPreparationBadgeClass(preparationStatus: string): string {
-    return preparationStatus === 'SERVED' ? 'badge badge--success' : 'badge badge--warning';
-  }
-
-  getOrderStatusBadgeClass(status: string): string {
+  getSessionStatusLabel(status: string): string {
     switch (status) {
       case 'OPEN':
-        return 'badge badge--warning';
+        return 'Abierta';
       case 'CLOSED':
-        return 'badge badge--success';
-      case 'CANCELLED':
-        return 'badge badge--danger';
+        return 'Cerrada';
       default:
-        return 'badge';
+        return status;
     }
   }
 }

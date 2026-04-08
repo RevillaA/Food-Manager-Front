@@ -58,6 +58,7 @@ export class CategoryFormModal {
     { label: 'Plato principal', value: 'MAIN_DISH' },
     { label: 'Bebida', value: 'DRINK' },
     { label: 'Extra', value: 'EXTRA' },
+    { label: 'Dulce', value: 'SWEET' },
   ] as const satisfies ReadonlyArray<{ label: string; value: CategoryType }>;
 
   readonly form = this.fb.group({
