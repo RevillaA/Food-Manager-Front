@@ -1,197 +1,429 @@
-<section class="page">
-  <div class="page__header">
+<section class="space-y-6 pb-24">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
     <div>
-      <h2>Reportes</h2>
-      <p>Métricas clave del negocio y comportamiento de ventas.</p>
+      <h1 class="text-2xl font-black text-[var(--color-text-primary)]">Reportes</h1>
     </div>
 
-    <button type="button" class="primary-button" (click)="refreshAll()">
-      Actualizar
-    </button>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div
+        class="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-soft)] px-4 py-2 text-xs font-semibold text-[var(--color-text-primary)]"
+      >
+        <span class="h-2.5 w-2.5 rounded-full bg-[var(--color-brand)]"></span>
+        Corte diario {{ dailyDateFilter() }}
+      </div>
+
+      <button
+        type="button"
+        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-[var(--color-text-primary)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-[var(--color-brand)] disabled:cursor-not-allowed disabled:opacity-70"
+        [disabled]="isBusy()"
+        (click)="refreshAll()"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          [class.animate-spin]="isBusy()"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-2.64-6.36" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 3v6h-6" />
+        </svg>
+
+        @if (isBusy()) {
+          Actualizando...
+        } @else {
+          Actualizar reportes
+        }
+      </button>
+    </div>
   </div>
 
   @if (errorMessage()) {
-    <div class="alert alert--error">
-      {{ errorMessage() }}
+    <div
+      class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm"
+    >
+      <div class="mt-0.5 text-red-500">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.5 18h17a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"
+          />
+        </svg>
+      </div>
+
+      <div class="flex-1 leading-5">
+        {{ errorMessage() }}
+      </div>
     </div>
   }
 
-  <article class="filters-card">
-    <div class="filters filters--daily">
-      <div class="filters__field">
-        <label for="dailyDate">Reporte diario</label>
-        <input
-          id="dailyDate"
-          type="date"
-          [value]="dailyDateFilter()"
-          (change)="onDailyDateChange($event)"
-        />
+  <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <article class="rounded-3xl border border-[var(--color-brand-border)] bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+        Total vendido del dia
+      </p>
+
+      @if (isLoadingDaily()) {
+        <p class="mt-3 text-sm font-medium text-[var(--color-text-secondary)]">Cargando...</p>
+      } @else {
+        <p class="mt-3 text-3xl font-black text-[var(--color-text-primary)]">
+          $ {{ dailyReport()?.total_sales_amount || 0 | number:'1.2-2' }}
+        </p>
+      }
+    </article>
+
+    <article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+        Ventas registradas
+      </p>
+
+      @if (isLoadingDaily()) {
+        <p class="mt-3 text-sm font-medium text-[var(--color-text-secondary)]">Cargando...</p>
+      } @else {
+        <p class="mt-3 text-3xl font-black text-[var(--color-text-primary)]">
+          {{ dailyReport()?.total_sales_count || 0 }}
+        </p>
+      }
+    </article>
+
+    <article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+        Ticket promedio
+      </p>
+
+      @if (isLoadingDaily()) {
+        <p class="mt-3 text-sm font-medium text-[var(--color-text-secondary)]">Cargando...</p>
+      } @else {
+        <p class="mt-3 text-3xl font-black text-[var(--color-text-primary)]">
+          $ {{ averageTicket() | number:'1.2-2' }}
+        </p>
+      }
+    </article>
+
+    <article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+        Fecha del corte
+      </p>
+
+      @if (isLoadingDaily()) {
+        <p class="mt-3 text-sm font-medium text-[var(--color-text-secondary)]">Cargando...</p>
+      } @else {
+        <p class="mt-3 text-2xl font-black text-[var(--color-text-primary)]">
+          {{ dailyReport()?.date || dailyDateFilter() }}
+        </p>
+      }
+    </article>
+  </section>
+
+  <div>
+    <article class="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm">
+      <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-[var(--color-text-primary)]">Reporte diario</h2>
+        </div>
       </div>
 
-      <div class="filters__actions">
-        <button type="button" class="secondary-button" (click)="applyDailyFilter()">
-          Cargar día
-        </button>
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
+        <div class="w-full space-y-2">
+          <label for="dailyDate" class="text-sm font-semibold text-[var(--color-text-primary)]">
+            Fecha del reporte
+          </label>
+
+          <input
+            id="dailyDate"
+            type="date"
+            class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-ring)]"
+            [value]="dailyDateFilter()"
+            (change)="onDailyDateChange($event)"
+          />
+        </div>
+
+      <button
+        type="button"
+        class="inline-flex items-center justify-center whitespace-nowrap rounded-2xl bg-[var(--color-brand)] px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-[var(--color-brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+        [disabled]="isLoadingDaily()"
+        (click)="applyDailyFilter()"
+      >
+        Cargar dia
+      </button>
+      </div>
+
+      <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <article class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+            Platos
+          </p>
+          <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+            $ {{ dailyReport()?.totals_by_category?.MAIN_DISH || 0 | number:'1.2-2' }}
+          </p>
+        </article>
+
+        <article class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+            Bebidas
+          </p>
+          <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+            $ {{ dailyReport()?.totals_by_category?.DRINK || 0 | number:'1.2-2' }}
+          </p>
+        </article>
+
+        <article class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+            Extras
+          </p>
+          <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+            $ {{ dailyReport()?.totals_by_category?.EXTRA || 0 | number:'1.2-2' }}
+          </p>
+        </article>
+
+        <article class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+            Dulces
+          </p>
+          <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+            $ {{ dailyReport()?.totals_by_category?.SWEET || 0 | number:'1.2-2' }}
+          </p>
+        </article>
+      </div>
+    </article>
+  </div>
+
+  <article class="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm">
+    <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-[var(--color-text-primary)]">Analisis por rango</h2>
       </div>
     </div>
-  </article>
 
-  <div class="summary-grid">
-    <article class="summary-card">
-      <h3>Total vendido del día</h3>
-      @if (isLoadingDaily()) {
-        <p>Cargando...</p>
-      } @else {
-        <strong>{{ dailyReport()?.total_sales_amount || 0 | number:'1.2-2' }}</strong>
-      }
-    </article>
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-end">
+      <div class="w-full space-y-2">
+        <label for="rangeDateFrom" class="text-sm font-semibold text-[var(--color-text-primary)]">
+          Desde
+        </label>
 
-    <article class="summary-card">
-      <h3>Cantidad de ventas</h3>
-      @if (isLoadingDaily()) {
-        <p>Cargando...</p>
-      } @else {
-        <strong>{{ dailyReport()?.total_sales_count || 0 }}</strong>
-      }
-    </article>
-
-    <article class="summary-card">
-      <h3>Ticket promedio</h3>
-      @if (isLoadingDaily()) {
-        <p>Cargando...</p>
-      } @else {
-        <strong>{{ averageTicket() | number:'1.2-2' }}</strong>
-      }
-    </article>
-
-    <article class="summary-card">
-      <h3>Bebidas vendidas ($)</h3>
-      @if (isLoadingDaily()) {
-        <p>Cargando...</p>
-      } @else {
-        <strong>{{ dailyReport()?.totals_by_category?.DRINK || 0 | number:'1.2-2' }}</strong>
-      }
-    </article>
-  </div>
-
-  <div class="summary-grid">
-    <article class="summary-card">
-      <h3>Platos vendidos ($)</h3>
-      @if (isLoadingDaily()) {
-        <p>Cargando...</p>
-      } @else {
-        <strong>{{ dailyReport()?.totals_by_category?.MAIN_DISH || 0 | number:'1.2-2' }}</strong>
-      }
-    </article>
-
-    <article class="summary-card">
-      <h3>Extras vendidos ($)</h3>
-      @if (isLoadingDaily()) {
-        <p>Cargando...</p>
-      } @else {
-        <strong>{{ dailyReport()?.totals_by_category?.EXTRA || 0 | number:'1.2-2' }}</strong>
-      }
-    </article>
-
-    <article class="summary-card summary-card--wide">
-      <h3>Fecha del reporte diario</h3>
-      @if (isLoadingDaily()) {
-        <p>Cargando...</p>
-      } @else {
-        <strong>{{ dailyReport()?.date || '—' }}</strong>
-      }
-    </article>
-  </div>
-
-  <article class="filters-card">
-    <div class="filters">
-      <div class="filters__field">
-        <label for="rangeDateFrom">Desde</label>
         <input
           id="rangeDateFrom"
           type="date"
+          class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-ring)]"
           [value]="rangeDateFromFilter()"
           (change)="onRangeDateFromChange($event)"
         />
       </div>
 
-      <div class="filters__field">
-        <label for="rangeDateTo">Hasta</label>
+      <div class="w-full space-y-2">
+        <label for="rangeDateTo" class="text-sm font-semibold text-[var(--color-text-primary)]">
+          Hasta
+        </label>
+
         <input
           id="rangeDateTo"
           type="date"
+          class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-ring)]"
           [value]="rangeDateToFilter()"
           (change)="onRangeDateToChange($event)"
         />
       </div>
 
-      <div class="filters__actions">
-        <button type="button" class="secondary-button" (click)="applyRangeFilters()">
-          Aplicar rango
-        </button>
-      </div>
+      <button
+        type="button"
+        class="inline-flex items-center justify-center whitespace-nowrap rounded-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70"
+        [disabled]="isLoadingRange() || isLoadingTopProducts() || isLoadingCategories()"
+        (click)="applyRangeFilters()"
+      >
+        Aplicar rango
+      </button>
+    </div>
+
+    <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <article class="rounded-3xl border border-[var(--color-brand-border)] bg-[var(--color-brand-soft)] p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+          Total vendido
+        </p>
+        <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+          $ {{ rangeReport()?.summary?.total_sales_amount || 0 | number:'1.2-2' }}
+        </p>
+      </article>
+
+      <article class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+          Ventas del rango
+        </p>
+        <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+          {{ rangeReport()?.summary?.total_sales_count || 0 }}
+        </p>
+      </article>
+
+      <article class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+          Ticket promedio
+        </p>
+        <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+          $ {{ rangeAverageTicket() | number:'1.2-2' }}
+        </p>
+      </article>
+
+      <article class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4">
+        <p class="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+          Categorias con movimiento
+        </p>
+        <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">
+          {{ totalCategoriesInRange() }}
+        </p>
+      </article>
     </div>
   </article>
 
-  <div class="content-grid">
-    <article class="card">
-      <div class="card__header">
-        <h3>Ventas por rango</h3>
+  <div class="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)]">
+    <article class="overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm">
+      <div class="flex flex-col gap-3 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-[var(--color-text-primary)]">Ventas del rango</h2>
+          <p class="text-sm text-[var(--color-text-secondary)]">
+            Detalle paginado de las ventas registradas dentro del rango seleccionado.
+          </p>
+        </div>
+
+        <span class="rounded-full bg-[var(--color-highlight)] px-3 py-1 text-xs font-semibold text-[var(--color-text-primary)]">
+          {{ total() }} registros
+        </span>
       </div>
 
       @if (isLoadingRange()) {
-        <div class="state-box">Cargando reporte por rango...</div>
-      } @else if (!rangeReport()) {
-        <div class="state-box">No hay datos para el rango seleccionado.</div>
-      } @else {
-        <div class="range-summary">
-          <div><strong>Desde:</strong> {{ rangeReport()?.summary?.date_from }}</div>
-          <div><strong>Hasta:</strong> {{ rangeReport()?.summary?.date_to }}</div>
-          <div><strong>Total vendido:</strong> {{ rangeReport()?.summary?.total_sales_amount | number:'1.2-2' }}</div>
-          <div><strong>Total ventas:</strong> {{ rangeReport()?.summary?.total_sales_count }}</div>
+        <div class="flex min-h-[260px] items-center justify-center px-6 py-10">
+          <div class="text-center">
+            <div
+              class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-[var(--color-brand)]"
+            ></div>
+            <p class="text-sm font-medium text-[var(--color-text-secondary)]">
+              Cargando reporte por rango...
+            </p>
+          </div>
         </div>
-
-        <div class="table-wrapper">
-          <table class="sales-table">
-            <thead>
-              <tr>
-                <th># Venta</th>
-                <th>Pago</th>
-                <th>Método</th>
-                <th>Total</th>
-                <th>Usuario</th>
-                <th>Fecha</th>
+      } @else if (!rangeReport() || (rangeReport()?.sales?.length || 0) === 0) {
+        <div class="flex min-h-[240px] items-center justify-center px-6 py-10">
+          <div class="text-center">
+            <p class="text-base font-semibold text-[var(--color-text-primary)]">
+              No hay ventas para el rango seleccionado
+            </p>
+            <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+              Ajusta las fechas para explorar otro periodo.
+            </p>
+          </div>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-[var(--color-brand-soft)]">
+              <tr class="border-b border-[var(--color-border-soft)]">
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                  Venta
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                  ID venta
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                  Pago
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                  Metodo
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                  Total
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                  Usuario
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                  Fecha
+                </th>
               </tr>
             </thead>
 
             <tbody>
               @for (sale of rangeReport()?.sales || []; track sale.id) {
-                <tr>
-                  <td>#{{ sale.sale_number }}</td>
-                  <td>
-                    <span [class]="getPaymentStatusBadgeClass(sale.payment_status)">
-                      {{ sale.payment_status }}
+                <tr class="border-b border-gray-100 transition hover:bg-[var(--color-surface-subtle)] last:border-b-0">
+                  <td class="px-6 py-4 align-middle">
+                    <div class="flex items-start gap-3">
+                      <div
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-highlight)] text-sm font-bold text-[var(--color-text-primary)]"
+                      >
+                        {{ getSaleInitial(sale.sale_number) }}
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                    <span class="font-semibold text-[var(--color-text-primary)]">
+                      {{ getSaleDisplayIdentifier(sale) }}
                     </span>
                   </td>
-                  <td>{{ getPaymentMethodLabel(sale.payment_method) }}</td>
-                  <td>{{ sale.total | number:'1.2-2' }}</td>
-                  <td>{{ sale.created_by_user.full_name }}</td>
-                  <td>{{ sale.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+
+                  <td class="px-6 py-4 align-middle">
+                    <span
+                      class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                      [class.bg-emerald-100]="sale.payment_status === 'PAID'"
+                      [class.text-emerald-700]="sale.payment_status === 'PAID'"
+                      [class.bg-amber-100]="sale.payment_status !== 'PAID'"
+                      [class.text-amber-700]="sale.payment_status !== 'PAID'"
+                    >
+                      {{ getPaymentStatusLabel(sale.payment_status) }}
+                    </span>
+                  </td>
+
+                  <td class="px-6 py-4 align-middle">
+                    <span
+                      class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                      [style.backgroundColor]="
+                        sale.payment_method === 'CASH' ? 'var(--color-brand-soft)' : '#f3f4f6'
+                      "
+                      [style.color]="
+                        sale.payment_method === 'CASH' ? 'var(--color-brand)' : '#374151'
+                      "
+                    >
+                      {{ getPaymentMethodLabel(sale.payment_method) }}
+                    </span>
+                  </td>
+
+                  <td class="px-6 py-4 align-middle text-sm font-semibold text-[var(--color-text-primary)]">
+                    $ {{ sale.total | number:'1.2-2' }}
+                  </td>
+
+                  <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                    {{ sale.created_by_user.full_name }}
+                  </td>
+
+                  <td class="px-6 py-4 align-middle text-sm text-gray-700">
+                    {{ sale.created_at | date:'dd/MM/yyyy HH:mm' }}
+                  </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
 
-        <div class="pagination">
-          <div class="pagination__summary">
-            Página {{ page() }} de {{ totalPages() }} · Total: {{ total() }}
+        <div
+          class="flex flex-col gap-4 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div class="text-sm text-[var(--color-text-secondary)]">
+            Pagina <span class="font-semibold text-[var(--color-text-primary)]">{{ page() }}</span>
+            de <span class="font-semibold text-[var(--color-text-primary)]">{{ totalPages() }}</span>
+            · Total: <span class="font-semibold text-[var(--color-text-primary)]">{{ total() }}</span>
           </div>
 
-          <div class="pagination__actions">
+          <div class="flex gap-3">
             <button
               type="button"
-              class="pagination__button"
+              class="inline-flex flex-1 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
               [disabled]="page() <= 1"
               (click)="goToPreviousPage()"
             >
@@ -200,7 +432,7 @@
 
             <button
               type="button"
-              class="pagination__button"
+              class="inline-flex flex-1 items-center justify-center rounded-xl bg-[var(--color-text-primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-brand)] disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
               [disabled]="page() >= totalPages()"
               (click)="goToNextPage()"
             >
@@ -211,74 +443,185 @@
       }
     </article>
 
-    <article class="card">
-      <div class="card__header">
-        <h3>Top productos</h3>
-      </div>
-
-      @if (isLoadingTopProducts()) {
-        <div class="state-box">Cargando top de productos...</div>
-      } @else if (topProducts().length === 0) {
-        <div class="state-box">No hay productos vendidos en ese rango.</div>
-      } @else {
-        <div class="table-wrapper">
-          <table class="sales-table">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Categoría</th>
-                <th>Cantidad</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              @for (product of topProducts(); track product.product_name + product.product_category_name) {
-                <tr>
-                  <td>{{ product.product_name }}</td>
-                  <td>{{ product.product_category_name }}</td>
-                  <td>{{ product.total_quantity_sold }}</td>
-                  <td>{{ product.total_amount | number:'1.2-2' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+    <div class="space-y-6">
+      <article class="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm">
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-[var(--color-text-primary)]">Top productos</h2>
+          </div>
         </div>
-      }
-    </article>
+
+        @if (isLoadingTopProducts()) {
+          <div class="flex min-h-[220px] items-center justify-center">
+            <div class="text-center">
+              <div
+                class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-[var(--color-brand)]"
+              ></div>
+              <p class="text-sm font-medium text-[var(--color-text-secondary)]">
+                Cargando top de productos...
+              </p>
+            </div>
+          </div>
+        } @else if (topProducts().length === 0) {
+          <div class="flex min-h-[200px] items-center justify-center">
+            <div class="text-center">
+              <p class="text-base font-semibold text-[var(--color-text-primary)]">
+                No hay productos vendidos en este rango
+              </p>
+              <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+                Prueba con otro periodo para comparar resultados.
+              </p>
+            </div>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (product of topProducts(); track product.product_name + product.product_category_name) {
+              <article
+                class="rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4 transition hover:border-[var(--color-brand-border)] hover:bg-white"
+              >
+                <div class="flex items-start gap-3">
+                  <div
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-highlight)] text-sm font-bold text-[var(--color-text-primary)]"
+                  >
+                    {{ getProductInitial(product.product_name) }}
+                  </div>
+
+                  <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                      <div class="min-w-0">
+                        <p class="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                          {{ product.product_name }}
+                        </p>
+                        <p class="mt-0.5 text-sm text-[var(--color-text-secondary)]">
+                          {{ product.product_category_name }}
+                        </p>
+                      </div>
+
+                      <p class="text-sm font-bold text-[var(--color-brand)]">
+                        $ {{ product.total_amount | number:'1.2-2' }}
+                      </p>
+                    </div>
+
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-200">
+                      <div
+                        class="h-full rounded-full bg-[var(--color-brand)] transition-[width] duration-300"
+                        [style.width.%]="getProductProgress(product.total_amount)"
+                      ></div>
+                    </div>
+
+                    <p class="mt-3 text-xs font-medium text-[var(--color-text-secondary)]">
+                      {{ product.total_quantity_sold }} unidades
+                    </p>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </article>
+
+      <article class="rounded-[2rem] border border-gray-100 bg-white p-5 shadow-sm">
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-[var(--color-text-primary)]">Categorias</h2>
+          </div>
+        </div>
+
+        @if (isLoadingCategories()) {
+          <div class="flex min-h-[220px] items-center justify-center">
+            <div class="text-center">
+              <div
+                class="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-gray-200 border-t-[var(--color-brand)]"
+              ></div>
+              <p class="text-sm font-medium text-[var(--color-text-secondary)]">
+                Cargando categorias...
+              </p>
+            </div>
+          </div>
+        } @else if (!(categorySummary()?.categories?.length)) {
+          <div class="flex min-h-[200px] items-center justify-center">
+            <div class="text-center">
+              <p class="text-base font-semibold text-[var(--color-text-primary)]">
+                No hay categorias con ventas en este rango
+              </p>
+              <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+                Intenta ampliar el periodo para ver actividad.
+              </p>
+            </div>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (category of categorySummary()?.categories || []; track category.category_name) {
+              <article
+                class="flex items-center gap-3 rounded-3xl border border-gray-100 bg-[var(--color-surface-subtle)] p-4"
+              >
+                <div
+                  class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-brand-soft)] text-sm font-bold text-[var(--color-brand)]"
+                >
+                  {{ getCategoryInitial(category.category_name) }}
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-semibold text-[var(--color-text-primary)]">
+                        {{ category.category_name }}
+                      </p>
+                      <p class="mt-0.5 text-sm text-[var(--color-text-secondary)]">
+                        {{ category.total_quantity }} productos vendidos
+                      </p>
+                    </div>
+
+                    <p class="text-sm font-bold text-[var(--color-text-primary)]">
+                      $ {{ category.total_amount | number:'1.2-2' }}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </article>
+    </div>
   </div>
 
-  <article class="card">
-    <div class="card__header">
-      <h3>Resumen por categorías</h3>
+  <div class="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+    <div class="group relative flex justify-end">
+      <button
+        type="button"
+        class="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-brand-border)] bg-[var(--color-brand-soft)] text-[var(--color-brand)] shadow-lg transition hover:scale-105 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="isLoadingDaily()"
+        (click)="printDailyReport()"
+        aria-label="Imprimir corte diario"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V3h12v6" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18h12v3H6z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 14h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2z" />
+        </svg>
+      </button>
+      <span class="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-xl bg-[var(--color-text-primary)] px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-md transition group-hover:opacity-100">
+        Imprimir corte diario
+      </span>
     </div>
 
-    @if (isLoadingCategories()) {
-      <div class="state-box">Cargando categorías...</div>
-    } @else if (!(categorySummary()?.categories?.length)) {
-      <div class="state-box">No hay datos por categorías en ese rango.</div>
-    } @else {
-      <div class="table-wrapper">
-        <table class="sales-table">
-          <thead>
-            <tr>
-              <th>Categoría</th>
-              <th>Cantidad total</th>
-              <th>Total vendido</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            @for (category of categorySummary()?.categories || []; track category.category_name) {
-              <tr>
-                <td>{{ category.category_name }}</td>
-                <td>{{ category.total_quantity }}</td>
-                <td>{{ category.total_amount | number:'1.2-2' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  </article>
+    <div class="group relative flex justify-end">
+      <button
+        type="button"
+        class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-text-primary)] text-white shadow-lg transition hover:scale-105 hover:bg-[var(--color-brand)] disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="isLoadingRange() || isLoadingTopProducts() || isLoadingCategories()"
+        (click)="printConsolidatedReport()"
+        aria-label="Imprimir reporte consolidado"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 2v6h6" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 13h8M8 17h8M8 9h2" />
+        </svg>
+      </button>
+      <span class="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-xl bg-[var(--color-text-primary)] px-3 py-1.5 text-xs font-semibold text-white opacity-0 shadow-md transition group-hover:opacity-100">
+        Imprimir consolidado
+      </span>
+    </div>
+  </div>
 </section>

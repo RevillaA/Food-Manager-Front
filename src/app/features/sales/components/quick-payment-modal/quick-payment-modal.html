@@ -1,53 +1,125 @@
 @if (isOpen()) {
-  <div class="modal-backdrop" (click)="close()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <div class="modal__header">
-        <div>
-          <h3>Cobrar pedido</h3>
-          <p>Registra el cobro del pedido cerrado.</p>
-        </div>
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm"
+    (click)="close()"
+  >
+    <div
+      class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[26px] border border-white/70 bg-white shadow-[0_25px_80px_rgba(17,24,39,0.18)]"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="border-b border-[#f1ebe3] bg-[#fffaf4] px-5 py-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 class="text-xl font-black text-[var(--color-text-primary)]">Cobrar pedido</h3>
+            <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+              Confirma el cobro del pedido cerrado con un flujo claro y seguro.
+            </p>
+          </div>
 
-        <button type="button" class="modal__close" (click)="close()">×</button>
+          <button
+            type="button"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#eadfd2] bg-white text-lg font-semibold text-[var(--color-text-primary)] transition hover:bg-[#fff4ea] disabled:cursor-not-allowed disabled:opacity-60"
+            [disabled]="isSubmitting()"
+            (click)="close()"
+            aria-label="Cerrar modal"
+          >
+            X
+          </button>
+        </div>
       </div>
 
       @if (order()) {
-        <div class="modal__body">
-          <div class="order-summary">
-            <div><strong>Pedido:</strong> #{{ order()?.order_number }}</div>
-            <div><strong>Subtotal:</strong> {{ order()?.subtotal | number:'1.2-2' }}</div>
-            <div><strong>Items:</strong> {{ order()?.items?.length || 0 }}</div>
+        <div class="flex-1 overflow-y-auto px-5 py-5">
+          <div class="rounded-3xl border border-[var(--color-brand-border)] bg-[var(--color-brand-soft)] p-3.5">
+            <div class="grid gap-3 sm:grid-cols-3">
+              <div class="rounded-2xl bg-white px-3.5 py-3">
+                <p class="text-xs text-gray-400">Pedido</p>
+                <p class="mt-1 text-sm font-bold text-[var(--color-text-primary)]">#{{ order()?.order_number }}</p>
+              </div>
+
+              <div class="rounded-2xl bg-white px-3.5 py-3">
+                <p class="text-xs text-gray-400">Subtotal</p>
+                <p class="mt-1 text-sm font-bold text-[var(--color-text-primary)]">
+                  $ {{ order()?.subtotal | number:'1.2-2' }}
+                </p>
+              </div>
+
+              <div class="rounded-2xl bg-white px-3.5 py-3">
+                <p class="text-xs text-gray-400">Items</p>
+                <p class="mt-1 text-sm font-bold text-[var(--color-text-primary)]">
+                  {{ order()?.items?.length || 0 }}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div class="form-grid">
-            <div class="form-field">
-              <label for="paymentStatus">Estado de pago</label>
-              <select
-                id="paymentStatus"
-                [(ngModel)]="paymentStatus"
-                [disabled]="isSubmitting()"
-              >
-                <option value="PAID">PAID</option>
-                <option value="PENDING">PENDING</option>
-              </select>
+          <div class="mt-5 grid gap-4 md:grid-cols-2">
+            <div class="space-y-2">
+              <label for="paymentStatus" class="text-sm font-semibold text-[var(--color-text-primary)]">
+                Estado de pago
+              </label>
+
+              <div class="relative">
+                <select
+                  id="paymentStatus"
+                  class="w-full appearance-none rounded-2xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-ring)]"
+                  [(ngModel)]="paymentStatus"
+                  [disabled]="isSubmitting()"
+                >
+                  <option value="PAID">{{ getPaymentStatusLabel('PAID') }}</option>
+                  <option value="PENDING">{{ getPaymentStatusLabel('PENDING') }}</option>
+                </select>
+
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fill-rule="evenodd"
+                      d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </span>
+              </div>
             </div>
 
-            <div class="form-field">
-              <label for="paymentMethod">Método de pago</label>
-              <select
-                id="paymentMethod"
-                [(ngModel)]="paymentMethod"
-                [disabled]="isSubmitting()"
-              >
-                <option value="CASH">CASH</option>
-                <option value="TRANSFER">TRANSFER</option>
-              </select>
+            <div class="space-y-2">
+              <label for="paymentMethod" class="text-sm font-semibold text-[var(--color-text-primary)]">
+                Metodo de pago
+              </label>
+
+              <div class="relative">
+                <select
+                  id="paymentMethod"
+                  class="w-full appearance-none rounded-2xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-[var(--color-text-primary)] outline-none transition focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-ring)]"
+                  [(ngModel)]="paymentMethod"
+                  [disabled]="isSubmitting()"
+                >
+                  <option value="CASH">{{ getPaymentMethodLabel('CASH') }}</option>
+                  <option value="TRANSFER">{{ getPaymentMethodLabel('TRANSFER') }}</option>
+                </select>
+
+                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                      fill-rule="evenodd"
+                      d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </span>
+              </div>
             </div>
 
-            <div class="form-field form-field--full">
-              <label for="paymentNotes">Notas</label>
+            <div class="space-y-2 md:col-span-2">
+              <label for="paymentNotes" class="text-sm font-semibold text-[var(--color-text-primary)]">
+                Notas
+              </label>
+
               <textarea
                 id="paymentNotes"
                 rows="3"
+                class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-[var(--color-text-primary)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-ring)]"
+                placeholder="Si aplica, agrega quien debe. Si no, se guarda: No hay novedades"
                 [(ngModel)]="notes"
                 [disabled]="isSubmitting()"
               ></textarea>
@@ -55,16 +127,32 @@
           </div>
 
           @if (errorMessage()) {
-            <div class="form-alert">
-              {{ errorMessage() }}
+            <div class="mt-5 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
+              <div class="mt-0.5 text-red-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 9v2m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.5 18h17a1 1 0 00.86-1.5l-7.5-13a1 1 0 00-1.72 0z"
+                  />
+                </svg>
+              </div>
+              <div class="flex-1 leading-5">{{ errorMessage() }}</div>
             </div>
           }
         </div>
 
-        <div class="modal__actions">
+        <div class="flex flex-col gap-3 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
-            class="button button--secondary"
+            class="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-[var(--color-text-primary)] transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             [disabled]="isSubmitting()"
             (click)="close()"
           >
@@ -73,7 +161,7 @@
 
           <button
             type="button"
-            class="button button--primary"
+            class="inline-flex items-center justify-center rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--color-brand-shadow)] transition hover:bg-[var(--color-brand-strong)] disabled:cursor-not-allowed disabled:opacity-70"
             [disabled]="!canSubmit() || isSubmitting()"
             (click)="submit()"
           >

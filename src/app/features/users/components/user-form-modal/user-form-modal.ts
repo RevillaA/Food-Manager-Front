@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  HostListener,
   Output,
   computed,
   effect,
@@ -149,6 +150,15 @@ export class UserFormModal {
     }
 
     this.closed.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    if (!this.isOpen()) {
+      return;
+    }
+
+    this.close();
   }
 
   submit(): void {

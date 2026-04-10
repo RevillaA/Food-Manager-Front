@@ -126,6 +126,7 @@
                     <tr class="border-b border-[#f1ebe3]">
                       <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">#</th>
                       <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">Estado</th>
+                      <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">Pago</th>
                       <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">Preparación</th>
                       <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">Subtotal</th>
                       <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">Creado por</th>
@@ -146,6 +147,15 @@
                             [class]="getOrderBadgeClass(order.status)"
                           >
                             {{ getOrderStatusLabel(order.status) }}
+                          </span>
+                        </td>
+
+                        <td class="px-5 py-4">
+                          <span
+                            class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                            [class]="getPaymentStateBadgeClass(order.payment_state)"
+                          >
+                            {{ getPaymentStateLabel(order.payment_state) }}
                           </span>
                         </td>
 

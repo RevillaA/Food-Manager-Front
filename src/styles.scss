@@ -1,1 +1,16 @@
-/* You can add global styles to this file, and also import other style files */
+/* Colores institucionales: cambia estos valores para re-tematizar los modulos. */
+:root {
+  --color-brand: #e2552e;
+  --color-brand-strong: #c94724;
+  --color-brand-soft: #fff8ef;
+  --color-brand-border: rgba(226, 85, 46, 0.14);
+  --color-brand-ring: rgba(226, 85, 46, 0.12);
+  --color-brand-shadow: rgba(226, 85, 46, 0.22);
+  --color-highlight: #f6e7a7;
+  --color-page-bg: #f7f5f2;
+  --color-surface-subtle: #fcfcfc;
+  --color-text-primary: #111111;
+  --color-text-secondary: #6b7280;
+  --color-border-soft: #e5e7eb;
+  --shadow-card: 0 12px 28px rgba(17, 24, 39, 0.06);
+}

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  HostListener,
   Output,
   computed,
   input,
@@ -33,6 +34,7 @@ export class QuickPaymentModal {
   paymentStatus: PaymentStatus = 'PAID';
   paymentMethod: PaymentMethod = 'CASH';
   notes = '';
+  private readonly defaultNote = 'No hay novedades';
 
   readonly canSubmit = computed(() => {
     const order = this.order();
@@ -47,6 +49,15 @@ export class QuickPaymentModal {
     this.closed.emit();
   }
 
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    if (!this.isOpen()) {
+      return;
+    }
+
+    this.close();
+  }
+
   submit(): void {
     const order = this.order();
 
@@ -58,7 +69,7 @@ export class QuickPaymentModal {
       order_id: order.id,
       payment_status: this.paymentStatus,
       payment_method: this.paymentMethod,
-      notes: this.notes.trim() || null,
+      notes: this.notes.trim() || this.defaultNote,
     });
   }
 
@@ -66,5 +77,27 @@ export class QuickPaymentModal {
     this.paymentStatus = 'PAID';
     this.paymentMethod = 'CASH';
     this.notes = '';
+  }
+
+  getPaymentStatusLabel(status: PaymentStatus): string {
+    switch (status) {
+      case 'PAID':
+        return 'Pagado';
+      case 'PENDING':
+        return 'Pendiente';
+      default:
+        return status;
+    }
+  }
+
+  getPaymentMethodLabel(method: PaymentMethod): string {
+    switch (method) {
+      case 'CASH':
+        return 'Efectivo';
+      case 'TRANSFER':
+        return 'Transferencia';
+      default:
+        return method;
+    }
   }
 }

@@ -49,6 +49,9 @@ export class ProductList implements OnInit {
   readonly totalPages = signal(1);
 
   readonly selectedCategoryId = signal<string>('');
+  readonly searchTerm = signal('');
+
+  readonly filteredProducts = signal<Product[]>([]);
 
   readonly isCreateModalOpen = signal(false);
   readonly isEditModalOpen = signal(false);
@@ -80,6 +83,7 @@ export class ProductList implements OnInit {
           });
 
           this.products.set(sortedProducts);
+          this.applySearchFilter();
           this.page.set(response.meta.page);
           this.limit.set(response.meta.limit);
           this.total.set(response.meta.total);
@@ -118,6 +122,17 @@ export class ProductList implements OnInit {
     const target = event.target as HTMLSelectElement;
     this.selectedCategoryId.set(target.value);
     this.loadProducts(1);
+  }
+
+  onSearchTermChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchTerm.set(target.value);
+    this.applySearchFilter();
+  }
+
+  clearSearchTerm(): void {
+    this.searchTerm.set('');
+    this.applySearchFilter();
   }
 
   clearCategoryFilter(): void {
@@ -192,6 +207,22 @@ export class ProductList implements OnInit {
     }
 
     this.loadProducts(this.page() + 1);
+  }
+
+  private applySearchFilter(): void {
+    const term = this.searchTerm().trim().toLowerCase();
+    const items = this.products();
+
+    if (!term) {
+      this.filteredProducts.set(items);
+      return;
+    }
+
+    this.filteredProducts.set(
+      items.filter((product) =>
+        product.name.toLowerCase().includes(term)
+      )
+    );
   }
 
   getCategoryTypeLabel(type: string): string {

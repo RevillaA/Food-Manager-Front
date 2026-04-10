@@ -82,7 +82,7 @@
               No hay pedidos en la jornada activa
             </p>
             <p class="mt-1 text-sm text-gray-500">
-              Aquí aparecerán los pedidos en preparación, servidos, cerrados y pagados.
+              Aquí aparecerán los pedidos en preparación, servidos, cerrados y cobrados.
             </p>
           </div>
         </div>
@@ -247,9 +247,9 @@
           <section class="space-y-4">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h3 class="text-base font-bold text-[#111111]">Pedidos cerrados</h3>
-                <p class="text-sm text-gray-500">
-                  Pedidos cerrados listos para revisión o cobro.
+                  <h3 class="text-base font-bold text-[#111111]">Pedidos cerrados</h3>
+                  <p class="text-sm text-gray-500">
+                  Pedidos cerrados que aún no registran venta.
                 </p>
               </div>
 
@@ -335,7 +335,7 @@
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
-                  <h3 class="text-base font-bold text-[#111111]">Pedidos pagados</h3>
+                  <h3 class="text-base font-bold text-[#111111]">Pedidos cobrados</h3>
 
                   <button
                     type="button"
@@ -362,7 +362,7 @@
                 </div>
 
                 <p class="mt-1 text-sm text-gray-500">
-                  Pedidos ya cobrados separados del flujo operativo del cajero.
+                  Pedidos con venta registrada, ya sea pagada o pendiente.
                 </p>
               </div>
 
@@ -378,7 +378,7 @@
             } @else {
               @if (paidOrders().length === 0) {
                 <div class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-6 text-sm text-sky-800">
-                  No hay pedidos pagados.
+                  No hay pedidos cobrados.
                 </div>
               } @else {
                 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

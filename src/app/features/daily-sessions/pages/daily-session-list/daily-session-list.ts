@@ -123,7 +123,7 @@ export class DailySessionList implements OnInit {
     });
 
     this.ordersService
-      .getOrders(1, 100, { daily_session_id: session.id })
+      .getOrdersBoard(1, 100, { daily_session_id: session.id })
       .subscribe({
         next: (response: OrdersListResponse) => {
           const sorted = [...response.data].sort((a, b) => {

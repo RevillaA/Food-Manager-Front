@@ -11,6 +11,7 @@ export interface Sale {
   id: string;
   daily_session_id: string;
   order_id: string;
+  sale_identifier?: string | null;
   created_by_user_id: string;
   sale_number: number;
   payment_status: PaymentStatus;

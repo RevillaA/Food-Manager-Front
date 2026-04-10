@@ -83,12 +83,12 @@ export class CashierOrders implements OnInit {
   readonly canChargeOrder = computed(() => {
     const order = this.selectedOrder();
 
-    const isPaidInBoard = !!order && this.paidOrders().some((item) => item.id === order.id);
+    const isChargedInBoard = !!order && this.paidOrders().some((item) => item.id === order.id);
 
     return !!order &&
       order.status === 'CLOSED' &&
-      order.payment_state !== 'PAID' &&
-      !isPaidInBoard;
+      this.isOrderPendingCharge(order.payment_state) &&
+      !isChargedInBoard;
   });
 
   readonly isBusy = computed(() => {
@@ -130,14 +130,14 @@ export class CashierOrders implements OnInit {
   readonly closedOrders = computed(() => {
     return [...this.boardOrders()]
       .filter((order) => order.status === 'CLOSED')
-      .filter((order) => order.payment_state !== 'PAID')
+      .filter((order) => this.isOrderPendingCharge(order.payment_state))
       .sort((a, b) => this.compareOrders(a, b));
   });
 
   readonly paidOrders = computed(() => {
     return [...this.boardOrders()]
       .filter((order) => order.status === 'CLOSED')
-      .filter((order) => order.payment_state === 'PAID')
+      .filter((order) => this.isOrderCharged(order.payment_state))
       .sort((a, b) => this.compareOrders(a, b));
   });
 
@@ -729,6 +729,14 @@ export class CashierOrders implements OnInit {
       default:
         return 4;
     }
+  }
+
+  private isOrderCharged(paymentState?: string): boolean {
+    return paymentState === 'PAID' || paymentState === 'PENDING';
+  }
+
+  private isOrderPendingCharge(paymentState?: string): boolean {
+    return !paymentState || paymentState === 'UNPAID';
   }
 
   private compareOrders(a: Order, b: Order): number {

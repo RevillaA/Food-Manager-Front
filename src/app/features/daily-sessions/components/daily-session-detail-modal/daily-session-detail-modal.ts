@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  HostListener,
   Output,
   input,
 } from '@angular/core';
@@ -30,6 +31,15 @@ export class DailySessionDetailModal {
     this.closed.emit();
   }
 
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    if (!this.isOpen()) {
+      return;
+    }
+
+    this.close();
+  }
+
   getSessionStatusLabel(status: string): string {
     switch (status) {
       case 'OPEN':
@@ -51,6 +61,32 @@ export class DailySessionDetailModal {
         return 'Cancelado';
       default:
         return status;
+    }
+  }
+
+  getPaymentStateLabel(status?: string): string {
+    switch (status) {
+      case 'PAID':
+        return 'Pagado';
+      case 'PENDING':
+        return 'Pendiente';
+      case 'UNPAID':
+        return 'Sin venta';
+      default:
+        return 'Sin venta';
+    }
+  }
+
+  getPaymentStateBadgeClass(status?: string): string {
+    switch (status) {
+      case 'PAID':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'PENDING':
+        return 'bg-amber-100 text-amber-700';
+      case 'UNPAID':
+        return 'bg-gray-100 text-gray-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   }
 
@@ -117,6 +153,7 @@ export class DailySessionDetailModal {
           <tr>
             <td>#${order.order_number}</td>
             <td>${this.escapeHtml(this.getOrderStatusLabel(order.status))}</td>
+            <td>${this.escapeHtml(this.getPaymentStateLabel(order.payment_state))}</td>
             <td>${this.escapeHtml(this.getPreparationStatusLabel(order.preparation_status))}</td>
             <td>$ ${Number(order.subtotal).toFixed(2)}</td>
             <td>${this.escapeHtml(order.created_by_user.full_name)}</td>
@@ -216,6 +253,7 @@ export class DailySessionDetailModal {
               <tr>
                 <th>#</th>
                 <th>Estado</th>
+                <th>Pago</th>
                 <th>Preparación</th>
                 <th>Subtotal</th>
                 <th>Creado por</th>
@@ -223,7 +261,7 @@ export class DailySessionDetailModal {
               </tr>
             </thead>
             <tbody>
-              ${ordersRows || '<tr><td colspan="6">No hay pedidos registrados en esta jornada.</td></tr>'}
+              ${ordersRows || '<tr><td colspan="7">No hay pedidos registrados en esta jornada.</td></tr>'}
             </tbody>
           </table>
         </body>

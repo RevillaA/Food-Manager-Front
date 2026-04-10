@@ -4,6 +4,7 @@ export interface DailySalesTotalsByCategory {
   MAIN_DISH: number;
   DRINK: number;
   EXTRA: number;
+  SWEET: number;
 }
 
 export interface DailySalesReport {
