@@ -168,7 +168,25 @@ export class AdminHome implements OnInit {
   }
 
   getPaymentStatusBadgeClass(status: string): string {
-    return status === 'PAID' ? 'badge badge--success' : 'badge badge--warning';
+    switch (status) {
+      case 'PAID':
+        return 'badge badge--success';
+      case 'PENDING':
+        return 'badge badge--warning';
+      default:
+        return 'badge badge--neutral';
+    }
+  }
+
+  getPaymentStatusLabel(status: string): string {
+    switch (status) {
+      case 'PAID':
+        return 'Pagada';
+      case 'PENDING':
+        return 'Pendiente';
+      default:
+        return status;
+    }
   }
 
   getPaymentMethodLabel(method: string): string {
@@ -183,8 +201,32 @@ export class AdminHome implements OnInit {
   }
 
   getPreparationBadgeClass(preparationStatus: string): string {
-    return preparationStatus === 'SERVED'
-      ? 'badge badge--success'
-      : 'badge badge--warning';
+    switch (preparationStatus) {
+      case 'SERVED':
+        return 'badge badge--success';
+      case 'READY':
+        return 'badge badge--info';
+      case 'IN_PROGRESS':
+        return 'badge badge--warning';
+      case 'PENDING':
+        return 'badge badge--neutral';
+      default:
+        return 'badge badge--neutral';
+    }
+  }
+
+  getPreparationStatusLabel(preparationStatus: string): string {
+    switch (preparationStatus) {
+      case 'PENDING':
+        return 'Pendiente';
+      case 'IN_PROGRESS':
+        return 'En preparacion';
+      case 'READY':
+        return 'Listo';
+      case 'SERVED':
+        return 'Servido';
+      default:
+        return preparationStatus;
+    }
   }
 }

@@ -24,6 +24,18 @@
   color: #92400e;
 }
 
+.badge--info {
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  color: #0369a1;
+}
+
+.badge--neutral {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+}
+
 .home-fade-in {
   animation: home-fade-in 480ms ease both;
 }

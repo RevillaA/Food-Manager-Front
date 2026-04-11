@@ -125,7 +125,7 @@
                     <td class="px-5 py-3.5 font-semibold text-[var(--color-text-primary)] sm:px-6">#{{ order.order_number }}</td>
                     <td class="px-5 py-3.5 sm:px-6">
                       <span [class]="getPreparationBadgeClass(order.preparation_status)">
-                        {{ order.preparation_status }}
+                        {{ getPreparationStatusLabel(order.preparation_status) }}
                       </span>
                     </td>
                     <td class="px-5 py-3.5 text-[var(--color-text-primary)] sm:px-6">{{ order.subtotal | number:'1.2-2' }}</td>
@@ -165,7 +165,7 @@
                     <td class="px-5 py-3.5 font-semibold text-[var(--color-text-primary)] sm:px-6">#{{ sale.sale_number }}</td>
                     <td class="px-5 py-3.5 sm:px-6">
                       <span [class]="getPaymentStatusBadgeClass(sale.payment_status)">
-                        {{ sale.payment_status }}
+                        {{ getPaymentStatusLabel(sale.payment_status) }}
                       </span>
                     </td>
                     <td class="px-5 py-3.5 text-[var(--color-text-primary)] sm:px-6">{{ getPaymentMethodLabel(sale.payment_method) }}</td>
