@@ -42,6 +42,7 @@ export class OrderDetailModal {
   readonly confirmationAction = signal<OrderConfirmationAction>(null);
 
   readonly isConfirmationModalOpen = computed(() => this.confirmationAction() !== null);
+  readonly isInteractionDisabled = computed(() => this.isBusy() || this.isLoadingOrderDetail());
 
   readonly filteredProducts = computed(() => {
     const normalizedSearch = this.searchTerm().trim().toLowerCase();
@@ -142,7 +143,7 @@ export class OrderDetailModal {
   }
 
   openCloseOrderConfirmation(): void {
-    if (!this.canOperateOrder() || this.isBusy()) {
+    if (!this.canOperateOrder() || this.isInteractionDisabled()) {
       return;
     }
 
@@ -150,7 +151,7 @@ export class OrderDetailModal {
   }
 
   openCancelOrderConfirmation(): void {
-    if (!this.canOperateOrder() || this.isBusy()) {
+    if (!this.canOperateOrder() || this.isInteractionDisabled()) {
       return;
     }
 
@@ -158,7 +159,7 @@ export class OrderDetailModal {
   }
 
   closeConfirmationModal(): void {
-    if (this.isBusy()) {
+    if (this.isInteractionDisabled()) {
       return;
     }
 
@@ -168,7 +169,7 @@ export class OrderDetailModal {
   confirmCurrentAction(): void {
     const action = this.confirmationAction();
 
-    if (!action || this.isBusy()) {
+    if (!action || this.isInteractionDisabled()) {
       return;
     }
 

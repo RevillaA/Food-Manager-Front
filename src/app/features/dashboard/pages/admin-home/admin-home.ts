@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
 
 import { DailySession } from '../../../daily-sessions/models/daily-session.interface';
 import { DailySessionsService } from '../../../daily-sessions/services/daily-sessions';
@@ -20,17 +19,10 @@ import { OrdersService } from '../../../orders/services/orders';
 import { Sale } from '../../../sales/models/sale.interface';
 import { SalesService } from '../../../sales/services/sales';
 
-interface QuickAccessItem {
-  title: string;
-  description: string;
-  route: string;
-  icon: string;
-}
-
 @Component({
   selector: 'app-admin-home',
   standalone: true,
-  imports: [CommonModule, DatePipe, DecimalPipe, RouterLink],
+  imports: [CommonModule, DatePipe, DecimalPipe],
   templateUrl: './admin-home.html',
   styleUrl: './admin-home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,51 +39,6 @@ export class AdminHome implements OnInit {
   readonly openOrders = signal<Order[]>([]);
   readonly closedOrdersPendingPayment = signal<Order[]>([]);
   readonly salesOfToday = signal<Sale[]>([]);
-
-  readonly quickAccessItems: QuickAccessItem[] = [
-    {
-      title: 'Jornadas',
-      description: 'Control, auditoría y revisión histórica.',
-      route: '/app/jornada',
-      icon: 'calendar_month',
-    },
-    {
-      title: 'Pedidos',
-      description: 'Operación del día y gestión POS.',
-      route: '/app/pedidos',
-      icon: 'receipt_long',
-    },
-    {
-      title: 'Ventas',
-      description: 'Registro financiero y detalle de cobros.',
-      route: '/app/ventas',
-      icon: 'payments',
-    },
-    {
-      title: 'Reportes',
-      description: 'Métricas clave del negocio.',
-      route: '/app/reportes',
-      icon: 'monitoring',
-    },
-    {
-      title: 'Productos',
-      description: 'Catálogo del negocio.',
-      route: '/app/productos',
-      icon: 'inventory_2',
-    },
-    {
-      title: 'Categorías',
-      description: 'Clasificación operativa del catálogo.',
-      route: '/app/categorias',
-      icon: 'category',
-    },
-    {
-      title: 'Usuarios',
-      description: 'Gestión de accesos y roles.',
-      route: '/app/usuarios',
-      icon: 'group',
-    },
-  ];
 
   readonly totalSoldToday = computed(() => {
     return this.salesOfToday().reduce((sum, sale) => sum + sale.total, 0);
@@ -206,7 +153,7 @@ export class AdminHome implements OnInit {
               error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);
                 this.errorMessage.set(
-                  error.error?.message || 'No se pudieron cargar las ventas del día.'
+                  error.error?.message || 'No se pudieron cargar las ventas del dÃ­a.'
                 );
               },
             });

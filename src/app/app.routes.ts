@@ -32,7 +32,7 @@ export const routes: Routes = [
         path: 'inicio',
         component: AdminHome,
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN'] },
+        data: { roles: ['ADMIN', 'CASHIER'] },
       },
       {
         path: 'pedidos',

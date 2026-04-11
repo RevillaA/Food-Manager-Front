@@ -44,6 +44,8 @@ export class CashierOrders implements OnInit {
   private readonly categoriesService = inject(CategoriesService);
   private readonly productsService = inject(ProductsService);
   private readonly salesService = inject(SalesService);
+  private readonly selectedOrderId = signal<string | null>(null);
+  private latestOrderDetailRequestId = 0;
 
   readonly isLoadingSession = signal(true);
   readonly isLoadingOrders = signal(false);
@@ -176,7 +178,9 @@ export class CashierOrders implements OnInit {
         if (error.status === 404) {
           this.activeSession.set(null);
           this.boardOrders.set([]);
+          this.selectedOrderId.set(null);
           this.selectedOrder.set(null);
+          this.isLoadingOrderDetail.set(false);
           this.isDetailModalOpen.set(false);
           return;
         }
@@ -188,12 +192,14 @@ export class CashierOrders implements OnInit {
     });
   }
 
-  loadBoardOrders(preserveSelectionId?: string): void {
+  loadBoardOrders(): void {
     const session = this.activeSession();
 
     if (!session) {
       this.boardOrders.set([]);
+      this.selectedOrderId.set(null);
       this.selectedOrder.set(null);
+      this.isLoadingOrderDetail.set(false);
       return;
     }
 
@@ -213,13 +219,6 @@ export class CashierOrders implements OnInit {
 
           this.boardOrders.set(sessionOrders);
           this.isLoadingOrders.set(false);
-
-          if (preserveSelectionId) {
-            const exists = sessionOrders.some((order) => order.id === preserveSelectionId);
-            if (exists) {
-              this.loadSelectedOrder(preserveSelectionId);
-            }
-          }
         },
         error: (error: HttpErrorResponse) => {
           this.isLoadingOrders.set(false);
@@ -299,7 +298,7 @@ export class CashierOrders implements OnInit {
     this.ordersService.createOrder({}).subscribe({
       next: (response) => {
         this.isCreatingOrder.set(false);
-        this.loadBoardOrders(response.data.id);
+        this.loadBoardOrders();
         this.openOrderDetail(response.data.id);
       },
       error: (error: HttpErrorResponse) => {
@@ -313,27 +312,45 @@ export class CashierOrders implements OnInit {
 
   openOrderDetail(orderId: string): void {
     this.isDetailModalOpen.set(true);
+    const shouldResetDetail = this.selectedOrderId() !== orderId;
+    this.selectedOrderId.set(orderId);
+
+    if (shouldResetDetail) {
+      this.selectedOrder.set(null);
+    }
+
     this.modalErrorMessage.set(null);
     this.loadSelectedOrder(orderId);
   }
 
   closeOrderDetail(): void {
     this.isDetailModalOpen.set(false);
+    this.selectedOrderId.set(null);
     this.selectedOrder.set(null);
+    this.isLoadingOrderDetail.set(false);
     this.selectedCategoryId.set('');
     this.modalErrorMessage.set(null);
   }
 
   loadSelectedOrder(orderId: string): void {
+    const requestId = ++this.latestOrderDetailRequestId;
     this.isLoadingOrderDetail.set(true);
     this.modalErrorMessage.set(null);
 
     this.ordersService.getOrderById(orderId).subscribe({
       next: (response) => {
+        if (requestId !== this.latestOrderDetailRequestId || this.selectedOrderId() !== orderId) {
+          return;
+        }
+
         this.selectedOrder.set(response.data);
         this.isLoadingOrderDetail.set(false);
       },
       error: (error: HttpErrorResponse) => {
+        if (requestId !== this.latestOrderDetailRequestId || this.selectedOrderId() !== orderId) {
+          return;
+        }
+
         this.isLoadingOrderDetail.set(false);
         this.modalErrorMessage.set(
           error.error?.message || 'No se pudo cargar el detalle del pedido.'
@@ -520,8 +537,7 @@ export class CashierOrders implements OnInit {
     this.ordersService.closeOrder(order.id, {}).subscribe({
       next: () => {
         this.isClosingOrder.set(false);
-        this.loadSelectedOrder(order.id);
-        this.loadBoardOrders(order.id);
+        this.refreshSelectedOrder(order.id);
       },
       error: (error: HttpErrorResponse) => {
         this.isClosingOrder.set(false);
@@ -605,7 +621,7 @@ export class CashierOrders implements OnInit {
 
   private refreshSelectedOrder(orderId: string): void {
     this.loadSelectedOrder(orderId);
-    this.loadBoardOrders(orderId);
+    this.loadBoardOrders();
   }
 
   getSessionStatusLabel(status: string): string {

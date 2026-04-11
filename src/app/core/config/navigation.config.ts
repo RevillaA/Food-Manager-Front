@@ -17,7 +17,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     label: 'Inicio',
     route: '/app/inicio',
     icon: 'dashboard',
-    roles: ['ADMIN'],
+    roles: ['ADMIN', 'CASHIER'],
   },
   {
     label: 'Pedidos',

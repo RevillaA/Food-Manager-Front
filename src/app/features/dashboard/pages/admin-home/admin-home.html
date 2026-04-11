@@ -1,177 +1,182 @@
-<section class="dashboard-page">
-  <div class="dashboard-page__header">
-    <div>
-      <h2>Inicio</h2>
-      <p>Vista ejecutiva del negocio y accesos rápidos de administración.</p>
-    </div>
+<section class="relative isolate overflow-hidden rounded-[2rem] border border-[var(--color-brand-border)] bg-[var(--color-surface-subtle)] p-4 sm:p-6 lg:p-8">
+  <div class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(226,85,46,0.18),_rgba(226,85,46,0))]"></div>
+  <div class="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(17,17,17,0.09),_rgba(17,17,17,0))]"></div>
 
-    <button type="button" class="primary-button" (click)="loadDashboard()">
-      Actualizar
-    </button>
-  </div>
+  <div class="relative z-10 flex flex-col gap-6 lg:gap-7">
+    <header class="home-fade-in rounded-3xl border border-[var(--color-brand-border)] bg-[linear-gradient(120deg,_#ffffff_0%,_var(--color-brand-soft)_58%,_#fff4e9_100%)] px-5 py-5 shadow-[0_20px_45px_rgba(17,24,39,0.08)] sm:px-7 sm:py-6">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="space-y-2">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-brand)]">
+            Panel Administrativo
+          </p>
+          <h2 class="text-2xl font-black text-[var(--color-text-primary)] sm:text-3xl">
+            Inicio
+          </h2>
+          <p class="max-w-2xl text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-base">
+            Vista ejecutiva del negocio con indicadores de operacion y accesos rapidos.
+          </p>
+        </div>
 
-  @if (errorMessage()) {
-    <div class="alert alert--error">
-      {{ errorMessage() }}
-    </div>
-  }
-
-  <article class="session-banner">
-    @if (isLoading()) {
-      <p>Cargando estado del negocio...</p>
-    } @else if (activeSession()) {
-      <div class="session-banner__content">
-        <div><strong>Jornada activa:</strong> {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}</div>
-        <div><strong>Estado:</strong> {{ activeSession()?.status }}</div>
-        <div><strong>Abierta por:</strong> {{ activeSession()?.opened_by_user?.full_name }}</div>
-        <div><strong>Apertura:</strong> {{ activeSession()?.opened_at | date:'dd/MM/yyyy HH:mm' }}</div>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_25px_var(--color-brand-shadow)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--color-brand-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-ring)]"
+          (click)="loadDashboard()"
+        >
+          <span class="material-symbols-outlined text-base">refresh</span>
+          Actualizar
+        </button>
       </div>
-    } @else {
-      <p>No existe jornada activa en este momento.</p>
+
+      <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <article class="rounded-2xl border border-white/70 bg-white/80 p-4 backdrop-blur-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Jornada</p>
+          @if (isLoading()) {
+            <p class="mt-2 text-sm text-[var(--color-text-secondary)]">Cargando...</p>
+          } @else if (activeSession()) {
+            <p class="mt-2 text-lg font-bold text-[var(--color-text-primary)]">
+              {{ activeSession()?.session_date | date:'dd/MM/yyyy' }}
+            </p>
+            <p class="text-xs text-[var(--color-text-secondary)]">
+              Abierta por {{ activeSession()?.opened_by_user?.full_name }}
+            </p>
+          } @else {
+            <p class="mt-2 text-sm text-[var(--color-text-secondary)]">Sin jornada activa</p>
+          }
+        </article>
+
+        <article class="rounded-2xl border border-white/70 bg-white/80 p-4 backdrop-blur-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Ventas del dia</p>
+          <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">{{ salesOfToday().length }}</p>
+          <p class="text-xs text-[var(--color-text-secondary)]">Registros de la jornada actual</p>
+        </article>
+
+        <article class="rounded-2xl border border-white/70 bg-white/80 p-4 backdrop-blur-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Total vendido</p>
+          <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">{{ totalSoldToday() | number:'1.2-2' }}</p>
+          <p class="text-xs text-[var(--color-text-secondary)]">Ingresos acumulados hoy</p>
+        </article>
+
+        <article class="rounded-2xl border border-white/70 bg-white/80 p-4 backdrop-blur-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Pedidos abiertos</p>
+          <p class="mt-2 text-2xl font-black text-[var(--color-text-primary)]">{{ openOrdersCount() }}</p>
+          <p class="text-xs text-[var(--color-text-secondary)]">Pedidos en operacion</p>
+        </article>
+      </div>
+    </header>
+
+    @if (errorMessage()) {
+      <div class="home-fade-in-delayed flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <span class="material-symbols-outlined text-base">warning</span>
+        <span>{{ errorMessage() }}</span>
+      </div>
     }
-  </article>
 
-  <div class="kpi-grid">
-    <article class="kpi-card">
-      <h3>Ventas del día</h3>
-      <strong>{{ salesOfToday().length }}</strong>
-      <p>Ventas registradas en la jornada actual.</p>
-    </article>
+    <section class="home-fade-in-delayed grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <article class="rounded-3xl border border-[var(--color-brand-border)] bg-white px-5 py-4 shadow-[var(--shadow-card)]">
+        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Listos para cobrar</p>
+        <p class="mt-2 text-3xl font-black text-[var(--color-text-primary)]">{{ pendingPaymentOrdersCount() }}</p>
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Pedidos cerrados pendientes de pago</p>
+      </article>
 
-    <article class="kpi-card">
-      <h3>Total vendido hoy</h3>
-      <strong>{{ totalSoldToday() | number:'1.2-2' }}</strong>
-      <p>Ingresos acumulados del día.</p>
-    </article>
+      <article class="rounded-3xl border border-[var(--color-brand-border)] bg-white px-5 py-4 shadow-[var(--shadow-card)]">
+        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Ventas pagadas</p>
+        <p class="mt-2 text-3xl font-black text-[var(--color-text-primary)]">{{ paidSalesCount() }}</p>
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Cobros completados</p>
+      </article>
 
-    <article class="kpi-card">
-      <h3>Pedidos abiertos</h3>
-      <strong>{{ openOrdersCount() }}</strong>
-      <p>Pedidos todavía en operación.</p>
-    </article>
+      <article class="rounded-3xl border border-[var(--color-brand-border)] bg-white px-5 py-4 shadow-[var(--shadow-card)]">
+        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Ventas pendientes</p>
+        <p class="mt-2 text-3xl font-black text-[var(--color-text-primary)]">{{ pendingSalesCount() }}</p>
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Pendientes de completar pago</p>
+      </article>
 
-    <article class="kpi-card">
-      <h3>Listos para cobrar</h3>
-      <strong>{{ pendingPaymentOrdersCount() }}</strong>
-      <p>Pedidos cerrados pendientes de venta.</p>
-    </article>
+      <article class="rounded-3xl border border-[var(--color-brand-border)] bg-white px-5 py-4 shadow-[var(--shadow-card)]">
+        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Ticket promedio</p>
+        <p class="mt-2 text-3xl font-black text-[var(--color-text-primary)]">{{ averageTicketToday() | number:'1.2-2' }}</p>
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Valor medio por venta hoy</p>
+      </article>
+    </section>
 
-    <article class="kpi-card">
-      <h3>Ventas pagadas</h3>
-      <strong>{{ paidSalesCount() }}</strong>
-      <p>Ventas finalizadas correctamente.</p>
-    </article>
+    <div class="grid gap-4 xl:grid-cols-2">
+      <article class="home-fade-in-late overflow-hidden rounded-3xl border border-[var(--color-brand-border)] bg-white shadow-[var(--shadow-card)]">
+        <div class="border-b border-[var(--color-border-soft)] px-5 py-4 sm:px-6">
+          <h3 class="text-lg font-bold text-[var(--color-text-primary)]">Pedidos abiertos prioritarios</h3>
+          <p class="mt-1 text-xs text-[var(--color-text-secondary)]">Top 5 pedidos activos de la jornada</p>
+        </div>
 
-    <article class="kpi-card">
-      <h3>Ventas pendientes</h3>
-      <strong>{{ pendingSalesCount() }}</strong>
-      <p>Ventas registradas con pago pendiente.</p>
-    </article>
-
-    <article class="kpi-card">
-      <h3>Ticket promedio</h3>
-      <strong>{{ averageTicketToday() | number:'1.2-2' }}</strong>
-      <p>Promedio por venta del día.</p>
-    </article>
-  </div>
-
-  <article class="card">
-    <div class="card__header">
-      <h3>Accesos rápidos</h3>
-    </div>
-
-    <div class="quick-access-grid">
-      @for (item of quickAccessItems; track item.route) {
-        <a class="quick-access-card" [routerLink]="item.route">
-          <span class="material-symbols-outlined">{{ item.icon }}</span>
-          <div>
-            <strong>{{ item.title }}</strong>
-            <p>{{ item.description }}</p>
+        @if (isLoading()) {
+          <div class="px-5 py-8 text-sm text-[var(--color-text-secondary)] sm:px-6">Cargando pedidos...</div>
+        } @else if (recentOpenOrders().length === 0) {
+          <div class="px-5 py-8 text-sm text-[var(--color-text-secondary)] sm:px-6">No hay pedidos abiertos en la jornada activa.</div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-[var(--color-brand-soft)]/60">
+                <tr>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6"># Pedido</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6">Preparacion</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6">Subtotal</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6">Hora</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of recentOpenOrders(); track order.id) {
+                  <tr class="border-t border-[var(--color-border-soft)]">
+                    <td class="px-5 py-3.5 font-semibold text-[var(--color-text-primary)] sm:px-6">#{{ order.order_number }}</td>
+                    <td class="px-5 py-3.5 sm:px-6">
+                      <span [class]="getPreparationBadgeClass(order.preparation_status)">
+                        {{ order.preparation_status }}
+                      </span>
+                    </td>
+                    <td class="px-5 py-3.5 text-[var(--color-text-primary)] sm:px-6">{{ order.subtotal | number:'1.2-2' }}</td>
+                    <td class="px-5 py-3.5 text-[var(--color-text-primary)] sm:px-6">{{ order.created_at | date:'HH:mm' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
-        </a>
-      }
+        }
+      </article>
+
+      <article class="home-fade-in-late overflow-hidden rounded-3xl border border-[var(--color-brand-border)] bg-white shadow-[var(--shadow-card)]">
+        <div class="border-b border-[var(--color-border-soft)] px-5 py-4 sm:px-6">
+          <h3 class="text-lg font-bold text-[var(--color-text-primary)]">Ultimas ventas del dia</h3>
+          <p class="mt-1 text-xs text-[var(--color-text-secondary)]">Top 5 ventas mas recientes</p>
+        </div>
+
+        @if (isLoading()) {
+          <div class="px-5 py-8 text-sm text-[var(--color-text-secondary)] sm:px-6">Cargando ventas...</div>
+        } @else if (recentSales().length === 0) {
+          <div class="px-5 py-8 text-sm text-[var(--color-text-secondary)] sm:px-6">No hay ventas registradas hoy.</div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-[var(--color-brand-soft)]/60">
+                <tr>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6"># Venta</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6">Pago</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6">Metodo</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)] sm:px-6">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sale of recentSales(); track sale.id) {
+                  <tr class="border-t border-[var(--color-border-soft)]">
+                    <td class="px-5 py-3.5 font-semibold text-[var(--color-text-primary)] sm:px-6">#{{ sale.sale_number }}</td>
+                    <td class="px-5 py-3.5 sm:px-6">
+                      <span [class]="getPaymentStatusBadgeClass(sale.payment_status)">
+                        {{ sale.payment_status }}
+                      </span>
+                    </td>
+                    <td class="px-5 py-3.5 text-[var(--color-text-primary)] sm:px-6">{{ getPaymentMethodLabel(sale.payment_method) }}</td>
+                    <td class="px-5 py-3.5 text-[var(--color-text-primary)] sm:px-6">{{ sale.total | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </article>
     </div>
-  </article>
-
-  <div class="content-grid">
-    <article class="card">
-      <div class="card__header">
-        <h3>Pedidos abiertos prioritarios</h3>
-      </div>
-
-      @if (isLoading()) {
-        <div class="state-box">Cargando pedidos...</div>
-      } @else if (recentOpenOrders().length === 0) {
-        <div class="state-box">No hay pedidos abiertos en la jornada activa.</div>
-      } @else {
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th># Pedido</th>
-                <th>Preparación</th>
-                <th>Subtotal</th>
-                <th>Hora</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              @for (order of recentOpenOrders(); track order.id) {
-                <tr>
-                  <td>#{{ order.order_number }}</td>
-                  <td>
-                    <span [class]="getPreparationBadgeClass(order.preparation_status)">
-                      {{ order.preparation_status }}
-                    </span>
-                  </td>
-                  <td>{{ order.subtotal | number:'1.2-2' }}</td>
-                  <td>{{ order.created_at | date:'HH:mm' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    </article>
-
-    <article class="card">
-      <div class="card__header">
-        <h3>Últimas ventas del día</h3>
-      </div>
-
-      @if (isLoading()) {
-        <div class="state-box">Cargando ventas...</div>
-      } @else if (recentSales().length === 0) {
-        <div class="state-box">No hay ventas registradas hoy.</div>
-      } @else {
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th># Venta</th>
-                <th>Pago</th>
-                <th>Método</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              @for (sale of recentSales(); track sale.id) {
-                <tr>
-                  <td>#{{ sale.sale_number }}</td>
-                  <td>
-                    <span [class]="getPaymentStatusBadgeClass(sale.payment_status)">
-                      {{ sale.payment_status }}
-                    </span>
-                  </td>
-                  <td>{{ getPaymentMethodLabel(sale.payment_method) }}</td>
-                  <td>{{ sale.total | number:'1.2-2' }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    </article>
   </div>
 </section>
