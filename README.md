@@ -57,3 +57,63 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Docker Local
+
+Run frontend in Docker (served by Nginx on port 4200):
+
+```bash
+npm run docker:up
+```
+
+Stop containers:
+
+```bash
+npm run docker:down
+```
+
+Reset containers and volumes:
+
+```bash
+npm run docker:reset
+```
+
+Set API URL for the containerized frontend with `API_URL`:
+
+```bash
+API_URL=http://localhost:3000/api npm run docker:up
+```
+
+PowerShell:
+
+```powershell
+$env:API_URL = "http://localhost:3000/api"
+npm run docker:up
+```
+
+Change the published frontend port with `FRONTEND_PORT`:
+
+```bash
+FRONTEND_PORT=8080 npm run docker:up
+```
+
+## CI/CD (GHCR + Railway)
+
+Workflow file: `.github/workflows/docker-release.yml`
+
+On every push to `main` and tags like `v1.0.0`, the pipeline:
+
+1. Builds Docker image
+2. Pushes to `ghcr.io/<owner>/<repo>`
+3. Triggers Railway redeploy
+
+Assumption:
+
+- The Railway service already exists and is configured to redeploy from its current source/image using the provided token and service IDs.
+
+Required repository secrets:
+
+- `RAILWAY_TOKEN`
+- `RAILWAY_PROJECT_ID`
+- `RAILWAY_ENVIRONMENT_ID`
+- `RAILWAY_SERVICE_ID`

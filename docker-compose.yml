@@ -1,0 +1,12 @@
+services:
+  front:
+    container_name: esquinarevis-front
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: esquinarevis-front:local
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-4200}:80"
+    environment:
+      API_URL: ${API_URL:-http://localhost:3000/api}
