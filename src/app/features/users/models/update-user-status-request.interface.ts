@@ -1,3 +1,3 @@
 export interface UpdateUserStatusRequest {
-  is_active: boolean;
+	is_active: boolean;
 }

@@ -1,3 +1,3 @@
 export interface CloseOrderRequest {
-  notes?: string | null;
+	notes?: string | null;
 }

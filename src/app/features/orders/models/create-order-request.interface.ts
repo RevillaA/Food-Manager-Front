@@ -1,3 +1,3 @@
 export interface CreateOrderRequest {
-  notes?: string | null;
+	notes?: string | null;
 }

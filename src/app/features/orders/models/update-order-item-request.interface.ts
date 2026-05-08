@@ -1,4 +1,4 @@
 export interface UpdateOrderItemRequest {
-  quantity?: number;
-  notes?: string | null;
+	quantity?: number;
+	notes?: string | null;
 }

@@ -1,15 +1,15 @@
-import { Order } from './order.interface';
+import { Order } from "./order.interface";
 
 export interface OrdersPaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
 }
 
 export interface OrdersListResponse {
-  success: boolean;
-  message: string;
-  data: Order[];
-  meta: OrdersPaginationMeta;
+	success: boolean;
+	message: string;
+	data: Order[];
+	meta: OrdersPaginationMeta;
 }

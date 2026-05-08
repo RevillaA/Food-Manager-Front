@@ -1,3 +1,3 @@
 export interface CloseDailySessionRequest {
-  notes?: string | null;
+	notes?: string | null;
 }

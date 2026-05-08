@@ -1,22 +1,22 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 
-import { CategoryStatusToggle } from './category-status-toggle';
+import { CategoryStatusToggle } from "./category-status-toggle";
 
-describe('CategoryStatusToggle', () => {
-  let component: CategoryStatusToggle;
-  let fixture: ComponentFixture<CategoryStatusToggle>;
+describe("CategoryStatusToggle", () => {
+	let component: CategoryStatusToggle;
+	let fixture: ComponentFixture<CategoryStatusToggle>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [CategoryStatusToggle],
-    }).compileComponents();
+	beforeEach(async () => {
+		await TestBed.configureTestingModule({
+			imports: [CategoryStatusToggle],
+		}).compileComponents();
 
-    fixture = TestBed.createComponent(CategoryStatusToggle);
-    component = fixture.componentInstance;
-    await fixture.whenStable();
-  });
+		fixture = TestBed.createComponent(CategoryStatusToggle);
+		component = fixture.componentInstance;
+		await fixture.whenStable();
+	});
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+	it("should create", () => {
+		expect(component).toBeTruthy();
+	});
 });

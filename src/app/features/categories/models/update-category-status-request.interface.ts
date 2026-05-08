@@ -1,3 +1,3 @@
 export interface UpdateCategoryStatusRequest {
-  is_active: boolean;
+	is_active: boolean;
 }

@@ -89,6 +89,13 @@ PowerShell:
 ```powershell
 $env:API_URL = "http://localhost:3000/api"
 npm run docker:up
+
+For the Railway backend shared in this project:
+
+```powershell
+$env:API_URL = "https://esquinarevis-backend-production.up.railway.app/api"
+npm run docker:up
+```
 ```
 
 Change the published frontend port with `FRONTEND_PORT`:

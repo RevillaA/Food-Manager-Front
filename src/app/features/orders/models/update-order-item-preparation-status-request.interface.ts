@@ -1,5 +1,5 @@
-import { OrderPreparationStatus } from './order.interface';
+import { OrderPreparationStatus } from "./order.interface";
 
 export interface UpdateOrderItemPreparationStatusRequest {
-  preparation_status: OrderPreparationStatus;
+	preparation_status: OrderPreparationStatus;
 }

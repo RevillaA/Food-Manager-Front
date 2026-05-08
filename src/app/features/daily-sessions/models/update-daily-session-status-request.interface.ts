@@ -1,5 +1,5 @@
-import { DailySessionStatus } from './daily-session.interface';
+import { DailySessionStatus } from "./daily-session.interface";
 
 export interface UpdateDailySessionStatusRequest {
-  status: DailySessionStatus;
+	status: DailySessionStatus;
 }

@@ -1,3 +1,3 @@
 export interface UpdateProductStatusRequest {
-  is_active: boolean;
+	is_active: boolean;
 }

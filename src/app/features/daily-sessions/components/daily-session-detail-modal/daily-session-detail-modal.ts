@@ -1,155 +1,155 @@
 import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  HostListener,
-  Output,
-  input,
-} from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	HostListener,
+	Output,
+	input,
+} from "@angular/core";
+import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 
-import { DailySession } from '../../models/daily-session.interface';
-import { Order } from '../../../orders/models/order.interface';
+import { DailySession } from "../../models/daily-session.interface";
+import { Order } from "../../../orders/models/order.interface";
 
 @Component({
-  selector: 'app-daily-session-detail-modal',
-  standalone: true,
-  imports: [CommonModule, DatePipe, DecimalPipe],
-  templateUrl: './daily-session-detail-modal.html',
-  styleUrl: './daily-session-detail-modal.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+	selector: "app-daily-session-detail-modal",
+	standalone: true,
+	imports: [CommonModule, DatePipe, DecimalPipe],
+	templateUrl: "./daily-session-detail-modal.html",
+	styleUrl: "./daily-session-detail-modal.scss",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DailySessionDetailModal {
-  readonly isOpen = input<boolean>(false);
-  readonly session = input<DailySession | null>(null);
-  readonly orders = input<Order[]>([]);
-  readonly isLoadingOrders = input<boolean>(false);
+	readonly isOpen = input<boolean>(false);
+	readonly session = input<DailySession | null>(null);
+	readonly orders = input<Order[]>([]);
+	readonly isLoadingOrders = input<boolean>(false);
 
-  @Output() closed = new EventEmitter<void>();
+	@Output() closed = new EventEmitter<void>();
 
-  close(): void {
-    this.closed.emit();
-  }
+	close(): void {
+		this.closed.emit();
+	}
 
-  @HostListener('document:keydown.escape')
-  handleEscapeKey(): void {
-    if (!this.isOpen()) {
-      return;
-    }
+	@HostListener("document:keydown.escape")
+	handleEscapeKey(): void {
+		if (!this.isOpen()) {
+			return;
+		}
 
-    this.close();
-  }
+		this.close();
+	}
 
-  getSessionStatusLabel(status: string): string {
-    switch (status) {
-      case 'OPEN':
-        return 'Abierta';
-      case 'CLOSED':
-        return 'Cerrada';
-      default:
-        return status;
-    }
-  }
+	getSessionStatusLabel(status: string): string {
+		switch (status) {
+			case "OPEN":
+				return "Abierta";
+			case "CLOSED":
+				return "Cerrada";
+			default:
+				return status;
+		}
+	}
 
-  getOrderStatusLabel(status: string): string {
-    switch (status) {
-      case 'OPEN':
-        return 'Abierto';
-      case 'CLOSED':
-        return 'Cerrado';
-      case 'CANCELLED':
-        return 'Cancelado';
-      default:
-        return status;
-    }
-  }
+	getOrderStatusLabel(status: string): string {
+		switch (status) {
+			case "OPEN":
+				return "Abierto";
+			case "CLOSED":
+				return "Cerrado";
+			case "CANCELLED":
+				return "Cancelado";
+			default:
+				return status;
+		}
+	}
 
-  getPaymentStateLabel(status?: string): string {
-    switch (status) {
-      case 'PAID':
-        return 'Pagado';
-      case 'PENDING':
-        return 'Pendiente';
-      case 'UNPAID':
-        return 'Sin venta';
-      default:
-        return 'Sin venta';
-    }
-  }
+	getPaymentStateLabel(status?: string): string {
+		switch (status) {
+			case "PAID":
+				return "Pagado";
+			case "PENDING":
+				return "Pendiente";
+			case "UNPAID":
+				return "Sin venta";
+			default:
+				return "Sin venta";
+		}
+	}
 
-  getPaymentStateBadgeClass(status?: string): string {
-    switch (status) {
-      case 'PAID':
-        return 'bg-emerald-100 text-emerald-700';
-      case 'PENDING':
-        return 'bg-amber-100 text-amber-700';
-      case 'UNPAID':
-        return 'bg-gray-100 text-gray-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  }
+	getPaymentStateBadgeClass(status?: string): string {
+		switch (status) {
+			case "PAID":
+				return "bg-emerald-100 text-emerald-700";
+			case "PENDING":
+				return "bg-amber-100 text-amber-700";
+			case "UNPAID":
+				return "bg-gray-100 text-gray-700";
+			default:
+				return "bg-gray-100 text-gray-700";
+		}
+	}
 
-  getPreparationStatusLabel(status: string): string {
-    switch (status) {
-      case 'PENDING':
-        return 'Pendiente';
-      case 'IN_PROGRESS':
-        return 'En preparación';
-      case 'READY':
-        return 'Listo';
-      case 'SERVED':
-        return 'Servido';
-      default:
-        return status;
-    }
-  }
+	getPreparationStatusLabel(status: string): string {
+		switch (status) {
+			case "PENDING":
+				return "Pendiente";
+			case "IN_PROGRESS":
+				return "En preparación";
+			case "READY":
+				return "Listo";
+			case "SERVED":
+				return "Servido";
+			default:
+				return status;
+		}
+	}
 
-  getPreparationBadgeClass(preparationStatus: string): string {
-    switch (preparationStatus) {
-      case 'SERVED':
-        return 'bg-emerald-100 text-emerald-700';
-      case 'READY':
-        return 'bg-sky-100 text-sky-700';
-      case 'IN_PROGRESS':
-        return 'bg-amber-100 text-amber-700';
-      case 'PENDING':
-        return 'bg-gray-100 text-gray-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  }
+	getPreparationBadgeClass(preparationStatus: string): string {
+		switch (preparationStatus) {
+			case "SERVED":
+				return "bg-emerald-100 text-emerald-700";
+			case "READY":
+				return "bg-sky-100 text-sky-700";
+			case "IN_PROGRESS":
+				return "bg-amber-100 text-amber-700";
+			case "PENDING":
+				return "bg-gray-100 text-gray-700";
+			default:
+				return "bg-gray-100 text-gray-700";
+		}
+	}
 
-  getOrderBadgeClass(status: string): string {
-    switch (status) {
-      case 'OPEN':
-        return 'bg-amber-100 text-amber-700';
-      case 'CLOSED':
-        return 'bg-emerald-100 text-emerald-700';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  }
+	getOrderBadgeClass(status: string): string {
+		switch (status) {
+			case "OPEN":
+				return "bg-amber-100 text-amber-700";
+			case "CLOSED":
+				return "bg-emerald-100 text-emerald-700";
+			case "CANCELLED":
+				return "bg-red-100 text-red-700";
+			default:
+				return "bg-gray-100 text-gray-700";
+		}
+	}
 
-  printDetail(): void {
-    const session = this.session();
-    const orders = this.orders();
+	printDetail(): void {
+		const session = this.session();
+		const orders = this.orders();
 
-    if (!session) {
-      return;
-    }
+		if (!session) {
+			return;
+		}
 
-    const printWindow = window.open('', '_blank', 'width=1000,height=800');
+		const printWindow = window.open("", "_blank", "width=1000,height=800");
 
-    if (!printWindow) {
-      return;
-    }
+		if (!printWindow) {
+			return;
+		}
 
-    const ordersRows = orders
-      .map(
-        (order) => `
+		const ordersRows = orders
+			.map(
+				(order) => `
           <tr>
             <td>#${order.order_number}</td>
             <td>${this.escapeHtml(this.getOrderStatusLabel(order.status))}</td>
@@ -159,11 +159,11 @@ export class DailySessionDetailModal {
             <td>${this.escapeHtml(order.created_by_user.full_name)}</td>
             <td>${this.formatDate(order.created_at)}</td>
           </tr>
-        `
-      )
-      .join('');
+        `,
+			)
+			.join("");
 
-    const html = `
+		const html = `
       <!doctype html>
       <html lang="es">
         <head>
@@ -234,15 +234,15 @@ export class DailySessionDetailModal {
             </div>
             <div class="box">
               <div class="label">Cierre</div>
-              <div class="value">${session.closed_at ? this.formatDate(session.closed_at) : '—'}</div>
+              <div class="value">${session.closed_at ? this.formatDate(session.closed_at) : "—"}</div>
             </div>
             <div class="box">
               <div class="label">Abierta por</div>
-              <div class="value">${this.escapeHtml(session.opened_by_user?.full_name || '—')}</div>
+              <div class="value">${this.escapeHtml(session.opened_by_user?.full_name || "—")}</div>
             </div>
             <div class="box">
               <div class="label">Cerrada por</div>
-              <div class="value">${this.escapeHtml(session.closed_by_user?.full_name || '—')}</div>
+              <div class="value">${this.escapeHtml(session.closed_by_user?.full_name || "—")}</div>
             </div>
           </div>
 
@@ -268,39 +268,39 @@ export class DailySessionDetailModal {
       </html>
     `;
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-  }
+		printWindow.document.open();
+		printWindow.document.write(html);
+		printWindow.document.close();
+		printWindow.focus();
+		printWindow.print();
+	}
 
-  private formatDate(value: string, dateOnly = false): string {
-    const date = new Date(value);
+	private formatDate(value: string, dateOnly = false): string {
+		const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
+		if (Number.isNaN(date.getTime())) {
+			return value;
+		}
 
-    return new Intl.DateTimeFormat('es-EC', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      ...(dateOnly
-        ? {}
-        : {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-    }).format(date);
-  }
+		return new Intl.DateTimeFormat("es-EC", {
+			day: "2-digit",
+			month: "2-digit",
+			year: "numeric",
+			...(dateOnly
+				? {}
+				: {
+						hour: "2-digit",
+						minute: "2-digit",
+					}),
+		}).format(date);
+	}
 
-  private escapeHtml(value: string): string {
-    return value
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
-  }
+	private escapeHtml(value: string): string {
+		return value
+			.replaceAll("&", "&amp;")
+			.replaceAll("<", "&lt;")
+			.replaceAll(">", "&gt;")
+			.replaceAll('"', "&quot;")
+			.replaceAll("'", "&#39;");
+	}
 }

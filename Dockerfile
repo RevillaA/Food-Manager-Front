@@ -18,7 +18,7 @@ COPY docker/start.sh /start.sh
 
 RUN chmod +x /start.sh
 
-ENV API_URL=http://localhost:3000/api
+ENV API_URL=
 EXPOSE 80
 
 CMD ["/start.sh"]

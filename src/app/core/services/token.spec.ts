@@ -1,16 +1,16 @@
-import { TestBed } from '@angular/core/testing';
-import { TokenService } from './token';
+import { TestBed } from "@angular/core/testing";
+import { TokenService } from "./token";
 
-describe('TokenService', () => {
-  let service: TokenService;
+describe("TokenService", () => {
+	let service: TokenService;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(TokenService);
-    localStorage.clear();
-  });
+	beforeEach(() => {
+		TestBed.configureTestingModule({});
+		service = TestBed.inject(TokenService);
+		localStorage.clear();
+	});
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
+	it("should be created", () => {
+		expect(service).toBeTruthy();
+	});
 });
